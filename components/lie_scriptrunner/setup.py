@@ -6,7 +6,7 @@
 #
 # A LIEStudio component able to run various scripts
 #
-# Copyright © 2016 Marc van Dijk, VU University Amsterdam, the Netherlands
+# Copyright © 2017 Marc van Dijk, VU University Amsterdam, the Netherlands
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,14 @@
 
 from setuptools import setup, find_packages
 
+
+def readme():
+    with open('README.rst') as f:
+        return f.read()
+
+
 distribution_name = 'lie_scriptrunner'
+
 
 setup(
     name=distribution_name,
@@ -51,4 +58,8 @@ setup(
         'Operating System :: OS Independent',
         'Intended Audience :: Science/Research',
         ],
+    install_requires=[],
+    extras_require={
+        'test': ['nose', 'coverage', 'nbsphinx'],
+    }
 )

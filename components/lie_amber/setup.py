@@ -54,4 +54,7 @@ setup(
         'Operating System :: OS Independent',
         'Intended Audience :: Science/Research',
         ],
+    scripts=[
+        'lie_amber/acpype.py'
+    ]
 )

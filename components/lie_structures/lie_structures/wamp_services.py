@@ -6,9 +6,10 @@ file: wamp_services.py
 WAMP service methods the module exposes.
 """
 
-import os
 import json
 import jsonschema
+import os
+import six
 import tempfile
 
 from StringIO import StringIO
@@ -36,12 +37,11 @@ class StructuresWampApi(LieApplicationSession):
 
     @wamp.register(u'liestudio.structures.get_structure')
     def get_structure(self, structure=None, session=None, **kwargs):
-
         # Retrieve the WAMP session information
         session = WAMPTaskMetaData(metadata=session)
 
         result = ''
-        tmpdir = '/Users/mvdijk/Documents/WorkProjects/liestudio-master/liestudio/tmp'
+        tmpdir = kwargs['tmpdir']
         structure_file = os.path.join(tmpdir, structure)
         if os.path.exists(structure_file):
             with open(structure_file, 'r') as sf:
@@ -162,7 +162,6 @@ class StructuresWampApi(LieApplicationSession):
         """
         Convert input file format to a different format
         """
-        
         # Retrieve the WAMP session information
         session = WAMPTaskMetaData(metadata=session or {})
 
@@ -173,19 +172,34 @@ class StructuresWampApi(LieApplicationSession):
         # Validate against JSON schema
         jsonschema.validate(config, STRUCTURES_SCHEMA)
 
-        molobject = mol_read(config['mol'], mol_format=config.get('input_format'),
-                             from_file=config.get('from_file', False))
+        # Create workdir and save file
+        workdir = os.path.join(kwargs.get('workdir', tempfile.gettempdir()))
 
-        file_path = None
-        if 'workdir' in config:
-            file_path = os.path.join(config.get('workdir'), 'structure.{0}'.format(config.get('output_format')))
+        # Input/output molecule
+        inp_fmt = config.get('input_format')
+        out_fmt = config.get('output_format')
+        self.log.info(
+            "Reading Molecule in {} format".format(inp_fmt))
 
-        output = mol_write(molobject,  mol_format=config.get('output_format'), file_path=file_path)
+        mol = config['mol']
+        if os.path.isfile(mol):
+            with open(mol, 'r') as f:
+                mol = f.read(mol)
+
+        molobject = mol_read(mol, mol_format=inp_fmt)
+
+        self.log.info("Writing Molecule in {} format".format(out_fmt))
+        output = mol_write(
+            molobject,  mol_format=out_fmt)
+
+        path = os.path.join(workdir, 'output.{}'.format(out_fmt))
+        with open(path, 'w') as f:
+            f.write(output)
 
         # Update session
         session.status = 'completed'
-        
-        return {'mol': output, 'session': session.dict()}
+
+        return {'mol': six.text_type(path), 'session': session.dict()}
 
     @wamp.register(u'liestudio.structure.addh')
     def addh_structures(self, session=None,  **kwargs):

@@ -7,7 +7,7 @@
 # Part of ‘lie_docking’, a package providing molecular docking functionality
 # for the LIEStudio package.
 #
-# Copyright © 2016 Marc van Dijk, VU University Amsterdam, the Netherlands
+# Copyright © 2017 Marc van Dijk, VU University Amsterdam, the Netherlands
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,14 +30,15 @@ setup(
     version=0.1,
     description='LIEStudio molecular simulation module',
     author='Marc van Dijk, VU University, Amsterdam, The Netherlands',
-    author_email='m4.van.dijk@vu.nl',
+    author_email=['m4.van.dijk@vu.nl', 'f.zapata@esciencecenter.nl'],
     url='https://github.com/NLeSC/LIEStudio',
     license='Apache Software License 2.0',
     keywords='LIEStudio molecular simulationg',
     platforms=['Any'],
     packages=find_packages(),
-    package_data={'': ['*.json'], 'lie_md': ['scripts/*']},
+    package_data={'lie_md': ['data/*']},
     py_modules=[distribution_name],
+    install_requires=['cerise_client', 'numpy', 'pyparsing', 'panedr'],
     include_package_data=True,
     zip_safe=True,
     entry_points={
@@ -53,4 +54,5 @@ setup(
         'Operating System :: OS Independent',
         'Intended Audience :: Science/Research',
     ],
+    scripts=['lie_md/scripts/getEnergies.py']
 )

@@ -5,6 +5,7 @@ file: component_manager.py
 
 """
 
+import fnmatch
 import imp
 import os
 import sys
@@ -15,6 +16,14 @@ from twisted.logger import Logger
 
 def import_error(pkg):
     print(pkg)
+
+
+def read_first_line(f):
+    """
+    Read the path in the first link of a file
+    """
+    with open(f, 'r') as f:
+        return f.read().split()[0]
 
 
 class ComponentManager(object):
@@ -52,6 +61,7 @@ class ComponentManager(object):
     def _list_components(self, source, recursive=False):
 
         components = {}
+
         if recursive:
             for importer, name, isPkg in pkgutil.walk_packages(
                     [source], onerror=import_error):
@@ -62,7 +72,34 @@ class ComponentManager(object):
                 if isPkg:
                     components[name] = os.path.join(source, name)
 
-        return components
+        # Add egg-link components
+        links = self._search_for_symbolic_links(source)
+
+        return self._update_components(components, links)
+
+    def _update_components(self, components, links):
+        """
+        add symbolic egg-links to the components
+        """
+        if links is None:
+            return components
+        else:
+            components.update(links)
+            return components
+
+    def _search_for_symbolic_links(self, path):
+        """
+        Look for egg-link files and return a dictionary
+        of names and paths
+        """
+        files = fnmatch.filter(os.listdir(path), '*egg-link')
+        if not files:
+            return None
+        else:
+            paths = [read_first_line(os.path.join(path, f)) for f in files]
+            names = [p.split('/')[-1] for p in paths]
+
+        return {n: p for n, p in zip(names, paths)}
 
     def add_searchpath(
             self, searchpath, prefix=None, search_method=lambda self,
@@ -148,16 +185,15 @@ class ComponentManager(object):
         By default the module is not reloaded if already loaded
         unless `do_reload` equals true.
         """
-
         if component in self._components:
             path, name = os.path.split(self._components[component])
             component_name = '{0}{1}'.format(self.prefix, name)
-
             if component_name in sys.modules and not do_reload:
                 return sys.modules[component_name]
 
             # try:
-            mfile, filename, data = imp.find_module(component, [path])
+            mfile, filename, data = imp.find_module(
+                component, [path, os.path.join(path, component)])
             # except ImportError:
             #    mfile, filename, data = imp.find_module(component_name, [path])
 

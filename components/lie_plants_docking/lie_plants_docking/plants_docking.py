@@ -88,16 +88,18 @@ class PlantsDocking(DockingBase):
             resultcsv = os.path.join(self._workdir, resultcsv)
             if os.path.isfile(resultcsv):
 
-                csvfile = open(resultcsv, 'r')
-                reader = csv.DictReader(csvfile)
-                for i, row in enumerate(reader):
-                    mol2 = row.get('TOTAL_SCORE', i)
-                    results[mol2] = row
-                    results[mol2]['path'] = os.path.join(self._workdir, '{0}.mol2'.format(mol2))
+                with open(resultcsv, 'r') as csvfile:
+                    reader = csv.DictReader(csvfile)
+                    for i, row in enumerate(reader):
+                        mol2 = row.get('TOTAL_SCORE', i)
+                        results[mol2] = row
+                        results[mol2]['path'] = os.path.join(
+                            self._workdir, '{0}.mol2'.format(mol2))
                 break
 
         # Run a clustering
         structures = [mol2.get('path') for mol2 in results.values()]
+        self.logging.info("STRUCTURES: ".format(structures))
         xyz = coords_from_mol2(structures)
         c = ClusterStructures(xyz, labels=results.keys())
         clusters = c.cluster(4, min_cluster_count=2)
@@ -196,19 +198,18 @@ class PlantsDocking(DockingBase):
                 protein_file.write(protein)
                 self._config['protein_file'] = 'protein.mol2'
 
-        if os.path.isfile(ligand):
-            self._config['ligand_file'] = ligand
-        else:
-            with open(os.path.join(self._workdir, 'ligand.mol2'), 'w') as ligand_file:
-                ligand_file.write(ligand)
-                self._config['ligand_file'] = 'ligand.mol2'
-        
-        # Write PLANTS configuration file    
+        with open(os.path.join(self._workdir, 'ligand.mol2'), 'w') as ligand_file:
+            ligand_file.write(ligand)
+            self._config['ligand_file'] = 'ligand.mol2'
+
+        # Write PLANTS configuration file
         conf_file = os.path.join(self._workdir, 'plants.config')
         with open(conf_file, 'w') as conf:
             conf.write(self.format_config_file())
 
         cmd = [exec_path, '--mode', mode, 'plants.config']
+        self.logging.info(
+            "Running plants_docking command:\n{}".format(' '.join(cmd)))
         output, error = cmd_runner(cmd, self._workdir)
 
         return True

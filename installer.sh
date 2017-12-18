@@ -304,7 +304,7 @@ function _activate_py_venv () {
 # Setup the Python virtual environment
 # - No virtual environment path yet, create it
 # - Already there, optionally force reinstall
-function _setup_python_venv () {
+function _setup_venv () {
     
     # Create or upgrade the Python virtual environment
     if [ ! -d $_VENVPATH ]; then

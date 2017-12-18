@@ -39,11 +39,11 @@ def mol_read(
         mol_format = mol.split('.')[-1] or None
 
     # Is the file format supported by the toolkit
-    if mol_format not in toolkit_driver.informats:
-        msg ='Molecular file format "{0}" not supported by {1}'
-        logging.error(msg.format(mol_format, toolkit))
+    # if mol_format not in toolkit_driver.informats:
+    #     msg ='Molecular file format "{0}" not supported by {1}'
+    #     logging.error(msg.format(mol_format, toolkit))
 
-        return None
+    #     return None
 
     molobject = None
     if from_file:

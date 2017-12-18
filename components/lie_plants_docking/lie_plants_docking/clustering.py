@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import os
 import numpy
 import itertools
 
 from twisted.logger import Logger
 from scipy.spatial.distance import squareform
 from scipy.cluster.hierarchy import linkage, fcluster, dendrogram
-
-#import matplotlib.pyplot as plt
 
 
 def coords_from_mol2(mol2_files):
@@ -86,7 +83,7 @@ def _kabsch(P, Q):
     # Computation of the covariance matrix
     C = numpy.dot(numpy.transpose(P), Q)
 
-    # Computation of the optimal rotation matrix
+     # Computation of the optimal rotation matrix
     # This can be done using singular value decomposition (SVD)
     # Getting the sign of the det(V)*(W) to decide
     # whether we need to correct our rotation matrix to ensure a
@@ -171,13 +168,18 @@ class ClusterStructures(object):
         self.labels = labels or range(len(labels))
 
         # All xyz coordinate sets need to be of type numpy.ndarray
-        assert all([isinstance(coords, numpy.ndarray) for coords in self.xyz]), 'Structure coordinates need to be of type numpy.ndarray'
+        print("XYZ: ", self.xyz)
+        cond = all([isinstance(coords, numpy.ndarray) for coords in self.xyz])
+        assert cond, 'Structure coordinates need to be of type numpy.ndarray'
 
         # Equality in number and order of atoms for all coordinate sets is assumed
-        assert len(set([coords.size for coords in self.xyz])) == 1, 'Structure coordinates have an unequal number of atoms'
+        print("Coordinates: ", self.xyz)
+        cond = len(set([coords.size for coords in self.xyz])) == 1
+        assert cond, 'Structure coordinates have an unequal number of atoms'
 
         # Optional list of labels (e.a. structure id's) need to match coordinate set in length
-        assert len(self.labels) == len(self.xyz), 'Number if labels is not matching number of coordinate sets'
+        cond = len(self.labels) == len(self.xyz)
+        assert cond, 'Number if labels is not matching number of coordinate sets'
 
         self._condensed_distance_matrix = self._build_pdist()
         self._clusters = []
@@ -216,7 +218,8 @@ class ClusterStructures(object):
 
         _metric_func = globals().get(self.metric)
         if not _metric_func:
-            raise LookupError('{0} class does not know about "{1}" pdist metric'.format(type(self).__name__, self.metric))
+            raise LookupError(
+                '{0} class does not know about "{1}" pdist metric'.format(type(self).__name__, self.metric))
 
         dst = []
         for pair in itertools.combinations(self.xyz, 2):
@@ -247,8 +250,9 @@ class ClusterStructures(object):
         :rtype:  :py:class:`dict`
         """
 
-        return dict([(self._clusters_filtered[sid]['cluster'], sid) for sid in self._clusters_filtered
-                     if self._clusters_filtered[sid].get('mean', False)])
+        return {self._clusters_filtered[sid]['cluster']: sid for sid
+                in self._clusters_filtered
+                if self._clusters_filtered[sid].get('mean', False)}
 
     @property
     def cluster_count(self):
@@ -293,7 +297,8 @@ class ClusterStructures(object):
 
         fig.savefig(to_file)
 
-    def cluster(self, t=5, method='single', criterion='distance', min_cluster_count=1):
+    def cluster(
+            self, t=5, method='single', criterion='distance', min_cluster_count=1):
         """
         Cluster the structures using hierarchical clustering methods on
         the calculated pairwise distance matrix.
@@ -354,14 +359,3 @@ class ClusterStructures(object):
             len(self.xyz), self.metric, self.method, self.criterion, self.t, min_cluster_count))
         self.logging.info('Resolved {0} clusters with a coverage of {1}%'.format(self.cluster_count, self.coverage * 100))
         return self._clusters_filtered
-
-
-if __name__ == '__main__':
-
-    import glob
-    s = glob.glob('/Users/mvdijk/Documents/WorkProjects/liestudio-master/liestudio/components/lie_docking-0.1/tests/cluster/*.mol2')
-    xyz = coords_from_mol2(s)
-    c = ClusterStructures(xyz, labels=[os.path.basename(n).replace('_entry_00001_conf_', 'lig_').split('.')[0] for n in s])
-    c.cluster(4, method='single', min_cluster_count=2)
-
-    print(c)

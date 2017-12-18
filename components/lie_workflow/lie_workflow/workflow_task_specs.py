@@ -6,12 +6,13 @@ file: task_specs.py
 Graph node task classes
 """
 
-import logging
-import jsonschema
 import itertools
+import jsonschema
 import json
-import time
+import random
 import os
+import six
+import time
 
 from twisted.internet import (reactor, threads)
 from twisted.logger import Logger
@@ -157,8 +158,7 @@ class Task(_TaskBase):
 class WampTask(_TaskBase):
 
     def run_task(self, runner, callback, errorback=None):
-        
-        method_url = unicode(self.uri)
+        method_url = six.text_type(self.uri)
         logging.info('Task {0} ({1}) running on {2}'.format(
             self.nid, self.task_name, method_url))
 
