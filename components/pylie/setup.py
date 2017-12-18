@@ -22,7 +22,7 @@
 
 from setuptools import setup, find_packages
 
-distribution_name = 'lie_pylie'
+distribution_name = 'pylie'
 test_requirements = ['unittest2']
 
 setup(
