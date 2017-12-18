@@ -40,7 +40,8 @@ setup(
     py_modules=[distribution_name],
     test_suite="tests",
     test_requirements=test_requirements,
-    install_requires=['numpy', 'pandas', 'statsmodels', 'jsonschema'] + test_requirements,
+    install_requires=['numpy', 'pandas', 'statsmodels', 'jsonschema', 'matplotlib',
+                      'scikit-learn'] + test_requirements,
     include_package_data=True,
     zip_safe=True,
     entry_points={
