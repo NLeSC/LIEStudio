@@ -35,7 +35,7 @@ class TestArrayMapper(unittest2.TestCase):
         self.wf.task_runner = task_runner
 
     def test_array_mapper(self):
-
+        
         # Set some workflow metadata in the start node
         self.wf.input(mapper=[{'dummy':1}, {'dummy':2}, {'dummy': 3}])
 

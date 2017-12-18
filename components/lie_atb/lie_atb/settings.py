@@ -14,10 +14,10 @@ SETTINGS = {
     'atb_forcefield_version': ['53A6', '54A7']
 }
 
-ALLOWED_QUERY_KEYS = ['iupac', 'inchi', 'common_name', 'formula', 'rnme',
+ALLOWED_QUERY_KEYS = ['iupac', 'inchi', 'inchi_key', 'common_name', 'formula', 'rnme',
                       'maximum_qm_level', 'curation_trust', 'is_finished',
                       'user_label', 'tag', 'any', 'match_partial', 'moltype',
-                      'max_atoms', 'min_atoms', 'has_pdb_hetId']
+                      'max_atoms', 'min_atoms', 'has_pdb_hetId', 'smiles']
 
 SUPPORTED_STRUCTURE_FILE_FORMATS = {
     'pqr_allatom_optimised': 'cry',
@@ -49,4 +49,29 @@ SUPPORTED_TOPOLOGY_FILE_FORMATS = {
     'cns_uniatom_param': 'cns_uniatom_param',
     'rtp_allatom': 'rtp_allatom',
     'rtp_uniatom': 'rtp_uniatom'
+}
+
+SUPPORTED_FILE_EXTENTIONS = {
+    'pqr_allatom_optimised': 'pqr',
+    'pqr_allatom_unoptimised': 'pqr',
+    'pqr_uniatom_optimised': 'pqr',
+    'pqr_uniatom_unoptimised': 'pqr',
+    'pdb_allatom_optimised': 'pdb',
+    'pdb_allatom_unoptimised': 'pdb',
+    'pdb_uniatom_optimised': 'pdb',
+    'pdb_uniatom_unoptimised': 'pdb',
+    'cif_allatom': 'cif',
+    'cif_allatom_extended': 'cif',
+    'cif_uniatom': 'cif',
+    'cif_uniatom_extended': 'cif',
+    'cns_allatom_top': 'top',
+    'cns_allatom_param': 'param',
+    'cns_uniatom_top': 'top',
+    'cns_uniatom_param': 'param',
+    'rtp_allatom': 'itp',
+    'rtp_uniatom': 'itp',
+    'mtb96_allatom': 'ifp',
+    'mtb96_uniatom': 'ifp',
+    'mtb_allatom': 'ifp',
+    'mtb_uniatom': 'ifp',
 }

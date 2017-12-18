@@ -44,7 +44,8 @@ class Graph(object):
       ambiguous and will be set to the node with the lowest _id.
     """
 
-    def __init__(self, adjacency=None, nodes=None, edges=None, orm=None):
+    def __init__(self, adjacency=None, nodes=None, edges=None, orm=None, root=None,
+                 is_directed=False, auto_nid=True, edge_data_tag='label', node_data_tag='data'):
         """
         Implement class __init__
 
@@ -67,7 +68,7 @@ class Graph(object):
         :type orm:            GraphORM object
         :param is_directed:   Rather the graph is directed or undirected
         :type is_directed:    bool, default False
-        :param auto_nid:      Use integers as node ID, automatilcally assigned
+        :param auto_nid:      Use integers as node ID, automatically assigned
                               and internally managed. If False, the node object
                               added will itself be used as node ID as long as
                               it is hashable. In the latter case, nodes are
@@ -77,7 +78,7 @@ class Graph(object):
         :param node_data_tag: dictionary key used to store node data
         :type node_data_tag:  str
         :param root:          root node nid used by various methods when
-                              traversing the graph in a directed fasion where
+                              traversing the graph in a directed fashion where
                               a notion of a parent is important.
         :type root:           mixed
         """
@@ -92,12 +93,12 @@ class Graph(object):
             self._set_adjacency()
 
         # Graph attributes, set directly
-        self.is_directed = False
+        self.is_directed = is_directed
         self.is_masked = False
-        self.auto_nid = True
-        self.root = None
-        self.edge_data_tag = 'label'
-        self.node_data_tag = 'data'
+        self.auto_nid = auto_nid
+        self.root = root
+        self.edge_data_tag = edge_data_tag
+        self.node_data_tag = node_data_tag
         self.node_tools = NodeTools
         self.edge_tools = EdgeTools
 
@@ -271,7 +272,7 @@ class Graph(object):
         """
         Implement class __len__
 
-        Represent the length of the grpah as the number of nodes
+        Represent the length of the graph as the number of nodes
 
         :return: number of nodes
         :rtype:  int
@@ -357,6 +358,11 @@ class Graph(object):
                 i if isinstance(i, int) else 0 for i in self.adjacency) + 1
 
     def _set_full_graph(self, graph):
+        """
+        Set a weak reference to the full graph
+
+        :param graph: Graph instance
+        """
 
         if isinstance(graph, Graph):
             self._full_graph = weakref.ref(graph._full_graph)()
@@ -438,7 +444,7 @@ class Graph(object):
 
             logger.debug(
                 'Add edge between node {0}-{1} with attributes {2}'.format(
-                    edge[0],edge[1], attr))
+                    edge[0], edge[1], attr))
 
         return edges_to_add[0]
 
@@ -447,7 +453,7 @@ class Graph(object):
         Add multiple edges to the graph.
 
         This is the iterable version of the add_edge methods allowing
-        mutliple edge additions from any iterable.
+        multiple edge additions from any iterable.
 
         :param edges: Objects to be added as edges to the graph
         :type edges: Iterable of hashable objects
@@ -477,7 +483,7 @@ class Graph(object):
         A node can be any hashable object that is internally represented by
         an automatically assigned node ID that should not be changed (_id).
         The node object is always part of a dictionary in the internal
-        database represetation allowing it to be queried by the various
+        database representation allowing it to be queried by the various
         graph query functions. This allows for the use of custom node
         identifiers.
 
@@ -538,7 +544,7 @@ class Graph(object):
         Add multiple nodes to the graph.
 
         This is the iterable version of the add_node methods allowing
-        mutliple node additions from any iterable.
+        multiple node additions from any iterable.
 
         :param nodes: Objects to be added as nodes to the graph
         :type nodes: Iterable of hashable objects
@@ -561,6 +567,8 @@ class Graph(object):
         attribute equals True in case it will return a deepcopy of the
         dictionary.
 
+        :param key:       node or edge identifier to return data for
+        :type key:        mixed
         :param copy_attr: Return a deep copy of the data dictionary
         :type copy_attr:  boolean
 
@@ -574,10 +582,10 @@ class Graph(object):
             if self.is_masked:
                 data_dict = self.edges.get(key)
             data_dict = self._full_graph.edges.get(key)
-
-        if self.is_masked:
+        elif self.is_masked:
             data_dict = self.nodes.get(key)
-        data_dict = self._full_graph.nodes.get(key)
+        else:
+            data_dict = self._full_graph.nodes.get(key)
 
         if copy_attr:
             return copy.deepcopy(data_dict)
@@ -587,7 +595,7 @@ class Graph(object):
         """
         Clear nodes and edges in the graph.
 
-        If the Graph instance represents a subgraph, only those nodes and edges
+        If the Graph instance represents a sub graph, only those nodes and edges
         will be removed.
         """
 
@@ -608,7 +616,7 @@ class Graph(object):
         made. The new graph has _full_graph referenced to itself.
         A deep copy of graph returns a new graph that should be self
         consistent. If a subgraph is copied this way it may contain edges
-        between nodes that are not in the subgraph. These are removed by
+        between nodes that are not in the sub graph. These are removed by
         default (clean attribute)
 
         :param deep:        return a deep copy of the Graph object
@@ -724,22 +732,22 @@ class Graph(object):
 
         Returns a new graph view object for the given edge and it's nodes.
         If `is_masked` equals True the new graph object will represent
-        a fully isolated subgraph for the edges, the connected nodes and the
+        a fully isolated sub graph for the edges, the connected nodes and the
         adjacency using views on the respective nodes, edges and adjacency
         GraphDict instances.
         If `is_masked` equals False only the edges GraphDict will represent
-        the subgraph as a view but nodes and adjacency will represent the full
+        the sub graph as a view but nodes and adjacency will represent the full
         graph. As such, connectivity with the full graph remains.
 
         Getedges calls the Graph Object Relation Mapper (GraphORM) class
         to customize the returned (sub) Graph class. Next to the custom classes
         registered with the ORM mapper, the `getedges` method allows for
         further customization of the returned Graph object through the
-        orm_cls attribute. In addition, for subgraphs containing single edges,
+        orm_cls attribute. In addition, for sub graphs containing single edges,
         the EdgeTools class is added.
 
-        :param edge:    edge id
-        :type edge:     iterable of length 2 containing intergers
+        :param edges:   edge id
+        :type edges:    iterable of length 2 containing integers
         :param orm_cls: custom classes to construct new edge oriented Graph
                         class from.
         :type orm_cls:  list
@@ -797,11 +805,11 @@ class Graph(object):
 
     def getnodes(self, nodes, orm_cls=None):
         """
-        Get one or multiple nodes as new subgraph object
+        Get one or multiple nodes as new sub graph object
 
         Returns a new graph view object for the given node and it's edges.
         If `is_masked` equals True the new graph object will represent
-        a fully isolated subgraph for the nodes, the edges that connect them
+        a fully isolated sub graph for the nodes, the edges that connect them
         and the adjacency using views on the respective nodes,
         edges and adjacency GraphDict instances.
         If `is_masked` equals False only the nodes GraphDict will represent
@@ -814,7 +822,7 @@ class Graph(object):
         to customize the returned (sub) Graph class. Next to the custom classes
         registered with the ORM mapper, the `getnodes` method allows for
         further customization of the returned Graph object through the
-        orm_cls attribute. In addition, for subgraphs containing single nodes,
+        orm_cls attribute. In addition, for sub graphs containing single nodes,
         the NodeTools class is added.
 
         :param nodes:   node id
@@ -1056,10 +1064,10 @@ class Graph(object):
         Remove multiple nodes from the graph.
 
         This is the iterable version of the remove_node methods allowing
-        mutliple nodes to be removed from any iterable.
+        multiple nodes to be removed from any iterable.
 
-        :param node: Nodes to remove
-        :type node: mixed
+        :param nodes: Nodes to remove
+        :type nodes: mixed
         """
 
         for node in nodes:

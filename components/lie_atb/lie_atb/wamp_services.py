@@ -8,7 +8,6 @@ WAMP service methods the module exposes.
 
 import os
 import sys
-import time
 import json
 import re
 
@@ -18,9 +17,8 @@ else:
     from urllib2 import HTTPError, URLError
 
 from autobahn import wamp
-from twisted.internet.defer import inlineCallbacks
 
-from lie_system import LieApplicationSession
+from lie_system import LieApplicationSession, WAMPTaskMetaData
 from lie_atb import ATBServerApi, ATB_Mol
 from lie_atb.settings import *
 
@@ -58,8 +56,6 @@ class ATBWampApi(LieApplicationSession):
         except HTTPError, error:
             return self._parse_server_error(error)
 
-        return None
-
     def _init_atb_api(self, api_token=None):
         """
         Start ATB server API interface.
@@ -81,10 +77,12 @@ class ATBWampApi(LieApplicationSession):
                            timeout=self.package_config.atb_api_timeout,
                            debug=self.package_config.atb_api_debug,
                            host=self.package_config.atb_url)
+        api.API_FORMAT=u'json'
         return api
 
     @wamp.register(u'liestudio.atb.submit')
-    def atb_submit_calculation(self, pdb, netcharge=0, moltype='heteromolecule', public=True, session=None):
+    def atb_submit_calculation(self, pdb=None, isfile=True, netcharge=0, moltype='heteromolecule', public=True,
+                               session=None, **kwargs):
         """
         Submit a new calculation to the ATB server
 
@@ -100,14 +98,22 @@ class ATBWampApi(LieApplicationSession):
         :type public:     bool
         """
 
+        # Retrieve the WAMP session information
+        session = WAMPTaskMetaData(metadata=session).dict()
+
         # Init ATBServerApi
         api = self._init_atb_api(api_token=self.package_config.atb_api_token)
         if not api:
-            self.logger.error('Unable to use the ATB API')
-            session['status'] = 'error'
-            return session
+            self.logger.error('Unable to use the ATB API', **session)
+            session['status'] = 'failed'
+            return {'session': session}
 
-        response = self._exceute_api_call(api.Molecules.submit, pdb=pdb, netcharge=netcharge, moltype=moltype, public=public)
+        # Open file if needed
+        if isfile and os.path.isfile(pdb):
+            pdb = open(pdb, 'r').read()
+
+        response = self._exceute_api_call(api.Molecules.submit, pdb=pdb, netcharge=netcharge, moltype=moltype,
+                                          public=public)
         if response and response.get(u'status', None) == u'error':
 
             # Check if molecule has been calculated already
@@ -122,13 +128,14 @@ class ATBWampApi(LieApplicationSession):
 
                 # Get the molecule data for molid
                 response = [self._exceute_api_call(api.Molecules.molid, molid=molid)]
-                session['status'] = 'done'
-                session['result'] = [mol.dict() for mol in response if isinstance(mol, ATB_Mol)]
+                session['status'] = 'completed'
+                return {'session': session, 'result': [mol.moldict for mol in response if isinstance(mol, ATB_Mol)]}
 
         return session
 
     @wamp.register(u'liestudio.atb.get_structure')
-    def atb_structure_download(self, molid, ffversion='54A7', fformat='pdb_allatom_optimised', atb_hash='HEAD', session=None):
+    def atb_structure_download(self, molid=None, ffversion='54A7', fformat='pdb_allatom_optimised', atb_hash='HEAD',
+                               session=None, **kwargs):
         """
         Retrieve a structure file from the ATB server by molid
 
@@ -153,39 +160,47 @@ class ATBWampApi(LieApplicationSession):
         :param fformat:     ATB supported file format
         """
 
+        # Retrieve the WAMP session information
+        session = WAMPTaskMetaData(metadata=session).dict()
+
         if ffversion not in self.package_config.atb_forcefield_version:
             self.logger.error('Forcefield version {0} not supported. Choose from {1}'.format(ffversion,
-                self.package_config.atb_forcefield_version))
-            session['status'] = 'error'
-            return session
+                self.package_config.atb_forcefield_version), **session)
+            session['status'] = 'failed'
+            return {'session': session}
 
         if fformat not in SUPPORTED_STRUCTURE_FILE_FORMATS:
-            self.logger.error('Structure format {0} not supported'.format(fformat))
-            session['status'] = 'error'
-            return session
+            self.logger.error('Structure format {0} not supported'.format(fformat), **session)
+            session['status'] = 'failed'
+            return {'session': session}
 
         # Init ATBServerApi
         api = self._init_atb_api(api_token=self.package_config.atb_api_token)
         if not api:
-            self.logger.error('Unable to use the ATB API')
-            session['status'] = 'error'
-            return session
+            self.logger.error('Unable to use the ATB API', **session)
+            session['status'] = 'failed'
+            return {'session': session}
 
         # Get the molecule by molid
         molecule = self._exceute_api_call(api.Molecules.molid, molid=molid)
+        filename = None
+        if 'workdir' in kwargs:
+            filename = os.path.join(kwargs['workdir'], '{0}.{1}'.format(fformat, SUPPORTED_FILE_EXTENTIONS.get(fformat, 'txt')))
+
         if molecule and isinstance(molecule, ATB_Mol):
-            structure = self._exceute_api_call(molecule.download_file, file=fformat, 
-                outputType=SUPPORTED_STRUCTURE_FILE_FORMATS.get(fformat, 'cry'), ffVersion=ffversion, hash=atb_hash)
-            session['status'] = 'done'
-            session['result'] = structure
-            return session
+            structure = self._exceute_api_call(molecule.download_file, file=fformat,
+                                               outputType=SUPPORTED_STRUCTURE_FILE_FORMATS.get(fformat, 'cry'),
+                                               ffVersion=ffversion, hash=atb_hash, fnme=filename)
+            session['status'] = 'completed'
+            return {'session': session, 'result': structure}
         else:
-            self.logger.error('Unable to retrieve structure file for molid: {0}'.format(molid))
-            session['status'] = 'error'
-            return session
+            self.logger.error('Unable to retrieve structure file for molid: {0}'.format(molid), **session)
+            session['status'] = 'failed'
+            return {'session': session}
 
     @wamp.register(u'liestudio.atb.get_topology')
-    def atb_topology_download(self, molid, ffversion='54A7', fformat='rtp_allatom', atb_hash='HEAD', session=None):
+    def atb_topology_download(self, molid=None, ffversion='54A7', fformat='rtp_allatom', atb_hash='HEAD',
+                              session=None, **kwargs):
         """
         Retrieve a topology and parameter files from the ATB server by molid
 
@@ -213,41 +228,49 @@ class ATBWampApi(LieApplicationSession):
         :type fformat:      :py:str
         """
 
+        # Retrieve the WAMP session information
+        session = WAMPTaskMetaData(metadata=session).dict()
+
         if ffversion not in self.package_config.atb_forcefield_version:
             self.logger.error('Forcefield version {0} not supported. Choose from {1}'.format(ffversion,
-                self.package_config.atb_forcefield_version))
-            session['status'] = 'error'
-            return session
+                self.package_config.atb_forcefield_version), **session)
+            session['status'] = 'failed'
+            return {'session': session}
         
         if fformat not in SUPPORTED_TOPOLOGY_FILE_FORMATS:
-            self.logger.error('Structure format {0} not supported'.format(fformat))
-            session['status'] = 'error'
-            return session
+            self.logger.error('Structure format {0} not supported'.format(fformat), **session)
+            session['status'] = 'failed'
+            return {'session': session}
 
         # Init ATBServerApi
         api = self._init_atb_api(api_token=self.package_config.atb_api_token)
         if not api:
-            self.logger.error('Unable to use the ATB API')
-            session['status'] = 'error'
-            return session
+            self.logger.error('Unable to use the ATB API', **session)
+            session['status'] = 'failed'
+            return {'session': session}
 
         # Get the molecule by molid
         molecule = self._exceute_api_call(api.Molecules.molid, molid=molid)
+        filename = None
+        if 'workdir' in kwargs:
+            filename = os.path.join(kwargs['workdir'], '{0}.{1}'.format(fformat, SUPPORTED_FILE_EXTENTIONS.get(fformat, 'top')))
+
         if molecule and isinstance(molecule, ATB_Mol):
             structure = self._exceute_api_call(molecule.download_file, file=SUPPORTED_TOPOLOGY_FILE_FORMATS[fformat],
-                outputType='top', ffVersion=ffversion, hash=atb_hash)
-            session['status'] = 'done'
-            session['result'] = structure
-            return session
+                outputType='top', ffVersion=ffversion, hash=atb_hash, fnme=filename)
+            session['status'] = 'completed'
+            return {'session': session, 'result': structure}
         else:
-            self.logger.error('Unable to retrieve topology/prameter file for molid: {0}'.format(molid))
-            session['status'] = 'error'
-            return session
+            self.logger.error('Unable to retrieve topology/prameter file for molid: {0}'.format(molid), **session)
+            session['status'] = 'failed'
+            return {'session': session}
 
     @wamp.register(u'liestudio.atb.structure_query')
-    def atb_structure_query(self, mol, session=None, structure_format='pdb', netcharge='*'):
+    def atb_structure_query(self, mol=None, isfile=True, structure_format='pdb', netcharge='*', session=None, **kwargs):
         """
         Query the ATB server database for molecules based on a structure
+
+        16-11-2017: Method only works with HTTP GET
 
         :param mol:              the structure to search for
         :type mol:               :py:str
@@ -259,24 +282,38 @@ class ATBWampApi(LieApplicationSession):
         :type netcharge:         :py:int
         """
 
+        # Retrieve the WAMP session information
+        session = WAMPTaskMetaData(metadata=session).dict()
+
         if structure_format not in ('pdb', 'mol', 'mol2', 'sdf', 'inchi'):
-            self.logger.error('Unsupported structure format for ATB structure based search: {0}'.format(structure_format))
-            session['status'] = 'error'
-            return session
+            self.logger.error('Unsupported structure format for ATB structure based search: {0}'.format(
+                structure_format), **session)
+            session['status'] = 'failed'
+            return {'session': session}
+
+        # Open file if needed
+        if isfile and os.path.isfile(mol):
+            mol = open(mol, 'r').read()
 
         # Init ATBServerApi
         api = self._init_atb_api(api_token=self.package_config.atb_api_token)
         if not api:
-            self.logger.error('Unable to use the ATB API')
-            session['status'] = 'error'
-            return session
+            self.logger.error('Unable to use the ATB API', **session)
+            session['status'] = 'failed'
+            return {'session': session}
 
         result = self._exceute_api_call(api.Molecules.structure_search, structure_format=structure_format,
-            structure=mol, netcharge=netcharge)
+            structure=mol, netcharge=netcharge, method=u'GET')
 
-        session['status'] = 'done'
-        session['result'] = result.get('matches', [])
-        return session
+        output = {}
+        session['status'] = 'completed'
+        output['session'] = session
+        output['matches'] = result.get('matches', [])
+        if 'search_molecule' in result:
+            for key in ('inchi', 'inchi_key'):
+                output['search_{0}'.format(key)] = result['search_molecule'][key]
+
+        return output
 
     @wamp.register(u'liestudio.atb.molecule_query')
     def atb_molecule_query(self, session=None, **kwargs):
@@ -290,6 +327,7 @@ class ATBWampApi(LieApplicationSession):
 
         iupac:              the official IUPAC name of the  molecule (str)
         inchi_key:          the unique InChI code of the molecule (str)
+        smiles:             canonical SMILES of the molecule (str)
         common_name:        the common name of the molecule (str)
         formula:            the molecular formula (e.a. C2H6O) (str)
         maximum_qm_level:   string of comma seperated integers.
@@ -314,37 +352,43 @@ class ATBWampApi(LieApplicationSession):
         :param kwargs: any of the accepted query key,value pairs.
         """
 
+        # Retrieve the WAMP session information
+        session = WAMPTaskMetaData(metadata=session).dict()
+        
         # Only a subset of the keys in a ATB molecule record are queryable.
         # Do not continue in case of unsupported keys.
         not_supported = [n for n in kwargs if n.lower() not in ALLOWED_QUERY_KEYS]
         if not_supported:
-            self.logger.error('Following ATB molecule search query attributes not allowed: {0}'.format(','.join(not_supported)))
-            session['status'] = 'error'
-            return session
+            self.logger.error('Following ATB molecule search query attributes not allowed: {0}'.format(
+                ','.join(not_supported)), **session)
+            session['status'] = 'failed'
+            return {'session': session}
 
         # Init ATBServerApi
         api = self._init_atb_api(api_token=self.package_config.atb_api_token)
         if not api:
-            self.logger.error('Unable to use the ATB API')
-            session['status'] = 'error'
-            return session
+            self.logger.error('Unable to use the ATB API', **session)
+            session['status'] = 'failed'
+            return {'session': session}
 
         # Get molecule directly using ATB molid
-        response = None
+        response = []
         if 'molid' in kwargs:
             response = [self._exceute_api_call(api.Molecules.molid, molid=kwargs['molid'])]
         else:
             # Execute ATB molecule search query
             response = self._exceute_api_call(api.Molecules.search, **kwargs)
 
-        if response:
-            session['status'] = 'done'
-            session['result'] = [mol.dict() for mol in response if isinstance(mol, ATB_Mol)]
-            return session
+        if isinstance(response, list):
+            if not len(response):
+                self.logger.info('ATB molecule query did not yield any results', **session)
+            session['status'] = 'completed'
+            return {'session': session, 'result': [mol.moldict for mol in response if isinstance(mol, ATB_Mol)]}
         else:
-            self.logger.error('Unable to execute ATB molecule query')
-            session['status'] = 'error'
-            return session
+            self.logger.error('Unable to execute ATB molecule query', **session)
+            session['status'] = 'failed'
+            return {'session': session}
+
 
 def make(config):
     """

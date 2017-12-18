@@ -1,18 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import os
-import sys
 import time
 import threading
-import jsonschema
 import json
-import importlib
 
 from twisted.logger import Logger
 from lie_system import WAMPTaskMetaData
 
-from .common import WorkflowError, _schema_to_data
-from .workflow_spec import WorkflowSpec
+from .workflow_common import WorkflowError, load_task_function, concat_dict, ManageWorkingDirectory
 
 # Get the task schema definitions from the default task_schema.json file
 TASK_SCHEMA_PATH = os.path.join(os.path.dirname(__file__), 'task_schema.json')
@@ -184,14 +180,12 @@ class WorkflowRunner(_WorkflowQueryMethods):
 
     :param workflow:   the workflow DAG to run
     :type workflow:    JSON object
-    :param schema_url: URL of the JSON schema describing the DAG
-    :type schema_url:  :py:str
     """
 
-    def __init__(self):
+    def __init__(self, workflow=None):
 
         # Workflow DAG placeholder
-        self.workflow = None
+        self.workflow = workflow
 
         # Init inherit classes such as the WorkflowSpec
         super(WorkflowRunner, self).__init__()
@@ -200,37 +194,44 @@ class WorkflowRunner(_WorkflowQueryMethods):
         self.task_runner = None
         self.workflow_thread = None
 
-    def _set_workdir(self, workdir, create=True):
-        """
-        Set working directory to store results.
+    def _collect_input(self, task):
+        
+        # Get all parent task IDs
+        parent_tasks = task.all_parents(return_nids=True)
 
-        :param workdir: Path to working directory
-        :type workdir:  :py:str
-        :param create:  Try to create the workdir directory if it does not
-                        exist
-        :type create:   :py:bool
-
-        :return:        Absolute path to working directory
-        :rtype:         :py:str
-        """
-
-        workdir = os.path.abspath(workdir)
-        if os.path.exists(workdir):
-            if os.access(workdir, os.W_OK):
-                msg = 'Project directory exists and writable: {0}'
-                logging.info(msg.format(workdir))
+        # Check if there are failed tasks among the ancestors and if we are
+        # allowed to continue with less
+        failed_ancestors = [
+            tid for tid in parent_tasks if self.workflow.nodes[tid]['status']
+            in ('failed', 'aborted')]
+        if failed_ancestors:
+            logging.error(
+                'Failed parent tasks detected. Unable to collect all output')
+        
+        # Check if the ancestors are al completed
+        collected_output = []
+        if all([self.workflow.nodes[tid]['status'] in
+                ('completed', 'disabled') for tid in parent_tasks]):
+            msg = 'Task {0} ({1}): Output of {2} parent tasks available, continue'
+            logging.info(msg.format(task.nid, task.task_name, len(parent_tasks)))
+            
+            # Collect output of previous tasks and apply data mapper and data
+            # selection if needed
+            for tid in parent_tasks:
+                mapper = self.workflow.edges[(tid, task.nid)].get('data_mapping', {})
+                select = self.workflow.edges[(tid, task.nid)].get('data_select',
+                                            self.workflow.nodes[tid]['output_data'].keys())
+                new_dict = {mapper.get(k, k): '${0}.{1}'.format(tid, k) for k, v in
+                            self.workflow.nodes[tid]['output_data'].items() if k in select}
+                collected_output.append(new_dict)
         else:
-            if create:
-                try:
-                    os.makedirs(workdir, 0755)
-                except:
-                    msg = 'Unable to create project directory: {0}'
-                    raise WorkflowError(msg.format(workdir))
-            else:
-                raise WorkflowError(
-                    'Project directory does not exist: {0}'.format(workdir))
-        return workdir
+            logging.info(
+                'Task {0} ({1}): Not all output available yet'.format(
+                    task.nid, task.task_name))
+            return
 
+        return concat_dict(collected_output)
+    
     def _error_callback(self, failure, tid):
         """
         Process the output of a failed task and stage the next task to run
@@ -239,7 +240,7 @@ class WorkflowRunner(_WorkflowQueryMethods):
         :param failure: Twisted deferred error stack trace
         :type failure:  exception
         :param tid:     Task ID of failed task
-        :type id:       :py:int
+        :type tid:      :py:int
         """
 
         task = self.workflow.getnodes(tid)
@@ -271,6 +272,7 @@ class WorkflowRunner(_WorkflowQueryMethods):
               or session object is unchanged? Set a breakpoint and let the
               user check?
         """
+        
         # Get the task
         task = self.workflow.getnodes(tid)
 
@@ -279,9 +281,10 @@ class WorkflowRunner(_WorkflowQueryMethods):
         task.active = False
 
         # If the task returned no output at all, fail it
+        session = WAMPTaskMetaData()
         if output:
-            # Get session information and remove when done
             session = WAMPTaskMetaData(metadata=output.get('session'))
+            # Remove when done
             del output['session']
 
         else:
@@ -308,10 +311,7 @@ class WorkflowRunner(_WorkflowQueryMethods):
         # If the task is completed, go to next
         next_task_nids = []
         if task.status == 'completed':
-
-            # Get data from just completed task and use as input for new task
-            task_input = task.get('output_data')
-
+            
             # Get next task(s) to run
             next_tasks = [t for t in task.children() if t.status != 'disabled']
             logging.info(
@@ -319,21 +319,18 @@ class WorkflowRunner(_WorkflowQueryMethods):
                     len(next_tasks), task.nid, task.task_name))
 
             for ntask in next_tasks:
-                if 'input_data' not in ntask.nodes[ntask.nid]:
-                    ntask.nodes[ntask.nid]['input_data'] = {}
+                # Get output from all tasks connected to new task
+                output = self._collect_input(ntask)
+                if output is not None:
+                    if 'input_data' not in ntask.nodes[ntask.nid]:
+                        ntask.nodes[ntask.nid]['input_data'] = {}
+                
+                    ntask.nodes[ntask.nid]['input_data'].update(output)
+                    next_task_nids.append(ntask.nid)
 
-                # Get output/input data mapper
-                mapper = self.workflow.edges[
-                    (task.nid, ntask.nid)].get('data_mapping', {})
-
-                # Map output to input by reference
-                if task_input:
-                    for key in task_input:
-                        map_key = mapper.get(key, key)
-                        fmt = '${0}.{1}'.format(task.nid, key)
-                        ntask.nodes[ntask.nid]['input_data'][map_key] = fmt
-
-                next_task_nids.append(ntask.nid)
+                #TODO: all tasks should provide output but the start task does not. Fix
+                elif task.task_type == 'Start':
+                    next_task_nids.append(ntask.nid)
 
         # If the task failed, retry if allowed and reset status to "ready"
         if task.status == 'failed' and task.retry_count > 0:
@@ -430,6 +427,7 @@ class WorkflowRunner(_WorkflowQueryMethods):
             self.workflow.nodes[tid]['session'] = session.dict()
 
             # Check if there is 'input' defined
+            # TODO: should be handled by a common function
             if 'input_data' not in task:
 
                 # Check if previous task has output and use it as input
@@ -444,7 +442,7 @@ class WorkflowRunner(_WorkflowQueryMethods):
                     ref = dict(
                         [(key, '${0}.{1}'.format(parent.nid, key)) for key
                          in parent.output_data])
-                    self.input(tid, ref)
+                    self.input(tid, **ref)
 
             # Do we need to store data to disk
             if task.get('store_output', False) and 'workdir' not in task.get('input_data', {}):
@@ -452,8 +450,9 @@ class WorkflowRunner(_WorkflowQueryMethods):
                 workdir = os.path.join(
                     workdir, 'task-{0}-{1}'.format(
                         task.nid, session['task_id']))
-                workdir = self._set_workdir(workdir)
-                self.input(task.nid, workdir=workdir)
+                wd = ManageWorkingDirectory(workdir=workdir)
+                if wd.create():
+                    self.input(task.nid, workdir=wd.path)
 
             self.is_running = True
             self.workflow.update_time = int(time.time())
@@ -466,7 +465,7 @@ class WorkflowRunner(_WorkflowQueryMethods):
                 'Task {0} ({1}), status: {2}'.format(
                     task.nid, task.task_name, task.status))
             task.run_task(
-                self.load_task_function(task.get('custom_func', None)),
+                load_task_function(task.get('custom_func', None)) or self.task_runner,
                 callback=self._output_callback,
                 errorback=self._error_callback)
 
@@ -475,50 +474,6 @@ class WorkflowRunner(_WorkflowQueryMethods):
         # workflow step to take.
         else:
             self._output_callback({'session': task.get('session')}, tid)
-
-    def load_task_function(self, class_name):
-        """
-        Load function that needs to be run with a specific workflow task type
-
-        Custom Python function can be run on the local machine using a blocking
-        or non-blocking task runner.
-        These functions are loaded dynamically ar runtime using the URI of the
-        function as stored in the task 'custom_func' attribute.
-        A function URI is defined as a dot-seperated string in wich the last
-        name defines the function name and all names in front the absolute or
-        relative path to the module containg the function. The module
-        needs to be in the python path.
-
-        Example: 'path.to.module.function'
-
-        If a global function is defined using the `task_runner` attribute it is
-        used as fallback in case a custom function is not defined or cannot be
-        loaded.
-
-        :param class_name: Python absolute or relative function URI
-        :type class_name:  :py:str
-
-        :rtype:            function object
-        """
-
-        if class_name:
-            module_name = '.'.join(class_name.split('.')[:-1])
-            function = class_name.split('.')[-1]
-
-            func = self.task_runner
-            try:
-                module = importlib.import_module(module_name)
-                func = getattr(module, function)
-                logging.debug(
-                    'Load task runner function: {0} from module: {1}'.format(
-                        function, module_name))
-            except:
-                msg = 'Unable to load task runner function: {0} from module: {1}'
-                logging.error(msg.format(function, module_name))
-
-            return func
-
-        return self.task_runner
 
     def delete(self):
         pass
@@ -578,13 +533,10 @@ class WorkflowRunner(_WorkflowQueryMethods):
         logging.info(
             'Remove breakpoint on task {0} ({1})'.format(tid, task.task_name))
 
-    def input(self, tid=None, **kwargs):
+    def input(self, tid, **kwargs):
         """
         Define task input and configuration data
         """
-
-        if not tid:
-            tid = self.workflow.root
 
         if tid not in self.workflow.nodes:
             logging.warn('No task with ID {0} in workflow'.format(tid))
@@ -625,57 +577,48 @@ class WorkflowRunner(_WorkflowQueryMethods):
         Initiate a WAMP session in the (Start) node
         """
 
-        if not tid:
-            tid = self.workflow.root
-
+        tid = tid or self.workflow.root
         task = self.workflow.getnodes(tid)
         return task.update_session(session_data)
 
-    def run(self, tid=None, workdir=None):
+    def run(self, tid=None):
         """
-        Run the workflow specification or instance thereof untill finished,
+        Run the workflow specification or instance thereof until finished,
         failed or a breakpoint is reached.
 
         A workflow is started from the first 'Start' task and then moves
         onwards. It can be started from any other task provided that the
         parent task was successfully completed.
 
-        The workflow will be excecuted on a different thread allowing for
+        The workflow will be executed on a different thread allowing for
         interactivity with the workflow instance while the workflow is
         running.
 
         :param tid:      Start the workflow from task ID
         :type tid:       :py:int
-        :param workdir:  Global results storage path
-        :type workdir:   :py:str
         """
 
         # Start from workflow root by default
-        if not tid:
-            tid = self.workflow.root
+        tid = tid or self.workflow.root
 
         # Check if tid exists
         if tid not in self.workflow.nodes:
             raise WorkflowError(
                 'Task with tid {0} not in workflow'.format(tid))
 
-        # Define results storage location
-        self_wd = self.workflow.nodes[self.workflow.root].get('workdir')
-        workdir = workdir or self_wd
-        if not workdir:
-            logging.info('No project directory defined to store results')
-        else:
-            self.workflow.nodes[self.workflow.root]['workdir'] = self._set_workdir(workdir)
+        # If there are steps that store results locally (store_output == True)
+        # a working directory should be defined.
+        if any([task.get('store_output', False) for task in self.workflow.nodes.values()]):
+            workdir = self.workflow.nodes[self.workflow.root].get('workdir')
+            workdir = ManageWorkingDirectory(workdir=workdir)
+            if not workdir.path:
+                raise WorkflowError('Local storage requested but no storage path defined')
+            else:
+                self.workflow.nodes[self.workflow.root]['workdir'] = workdir.create()
 
         logging.info(
             'Running workflow: {0}, start task ID: {1}'.format(
                 self.workflow.title, tid))
-
-        # (WAMP) session should be defined in the Start task
-        start_session = self.workflow.nodes[self.workflow.root].get('session')
-        if not start_session:
-            self.set_wamp_session()
-            logging.info('Initiate session data on Start node')
 
         # Always set is_running to True to allow for immediate interactive use
         # preventing race conditions. If the already running, return
@@ -684,11 +627,10 @@ class WorkflowRunner(_WorkflowQueryMethods):
         self.workflow.is_running = True
 
         # Set workflow start time if not defined. Don't rerun to allow
-        # continuation of unfinished workflows.
+        # continuation of unfinished workflow.
         if not hasattr(self.workflow, 'start_time'):
             self.workflow.start_time = int(time.time())
 
-        self.workflow_thread = threading.Thread(
-            target=self._run_task, args=[tid])
+        self.workflow_thread = threading.Thread(target=self._run_task, args=[tid])
         self.workflow_thread.daemon = True
         self.workflow_thread.start()

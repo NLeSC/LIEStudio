@@ -1,0 +1,99 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://liestudio/schemas/amber_schema.json",
+    "title": "pylie",
+    "description": "Data processing and model training for LIE based binding affinity prediction",
+    "type": "object",
+    "properties": {
+        "mdframe_import": {
+            "type": "object",
+            "description": "MDFrame energy trajectory definition",
+            "properties": {
+                "filetype": {
+                    "type": "string",
+                    "description": "MD energy trajectory format",
+                    "default": "gromacs",
+                    "enum": [
+                        "gromacs"
+                    ]
+                },
+                "inlierFilterMethod": {
+                    "type": "string",
+                    "description": "Filter method for selecting inlier coulomb/VdW energy pairs",
+                    "default": "pair",
+                    "enum": [
+                        "single",
+                        "pair",
+                        "global"
+                    ]
+                },
+                "lie_vdw_header": {
+                    "type": "string",
+                    "description": "MD file data header representing the LIE Van der Waals energy term",
+                    "default": "vdwLIE"
+                },
+                "lie_ele_header": {
+                    "type": "string",
+                    "description": "MD file data header representing the LIE Coulomb energy term",
+                    "default": "EleLIE"
+                },
+                "case": {
+                    "type": "integer",
+                    "description": "Case ID for the collected energy trajectories",
+                    "default": 1
+                }
+            }
+        },
+        "filter_stable_trajectory" :{
+            "type": "object",
+            "description": "Detect and filter stable regions in the MD energy trajectory",
+            "properties": {
+                "do_filter": {
+                    "type": "boolean",
+                    "description": "Filter the MDFrame for detected stable regions",
+                    "default": true
+                },
+                "do_plot": {
+                    "type": "boolean",
+                    "description": "Make plots of the detected stable regions",
+                    "default": false
+                },
+                "fftfreq": {
+                    "type": "integer",
+                    "description": "Filter frequencies higher than X. The higher the number, the more bumps.",
+                    "default": 15
+                },
+                "gradco": {
+                    "type": "number",
+                    "description": "Gradient cutoff: if value higher than X, the gradient is high enough, there is a change.",
+                    "default": 0.2
+                },
+                "gradco_mult": {
+                    "type": "integer",
+                    "description": "Gradient multiplication factor for plotting.",
+                    "default": 100
+                },
+                "gradcl": {
+                    "type": "number",
+                    "description": "Clean 0.1*length from start and end (0 means no cleaning, recommended. Only use with FFTfreq ~5 and lower).",
+                    "default": 0.0
+                },
+                "minlength": {
+                    "type": "integer",
+                    "description": "Minimal length of stable data (in datapoints, not time!).",
+                    "default": 100
+                },
+                "doublespline": {
+                    "type": "boolean",
+                    "description": "Perform double spline fitting on FFT output (recommended)",
+                    "default": true
+                },
+                "splinesmooth": {
+                    "type": "integer",
+                    "description": "Smoothness of the spline (low is smoother, 0 gives the orig data back).",
+                    "default": 999
+                }
+            }
+        }
+    }
+}

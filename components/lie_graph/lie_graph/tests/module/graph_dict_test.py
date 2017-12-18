@@ -6,15 +6,7 @@ file: module_graphdict_test.py
 Unit tests for the GraphDict class
 """
 
-import copy
-import os
-import sys
-import types
 import unittest2
-
-# Add modules in package to path so we can import them
-currpath = os.path.dirname(__file__)
-sys.path.append(os.path.abspath(os.path.join(currpath, '..')))
 
 from lie_graph.graph_dict import GraphDict
 
@@ -39,10 +31,10 @@ class TestGraphDict(unittest2.TestCase):
         self.assertEqual(len(keyview), 6)
 
         other = GraphDict({'two': 2, 'three': 3, 'four': 4, 'six': 6})
-        self.assertEqual(keyview & other.keys(), set(['four', 'six', 'two', 'three']))
-        self.assertEqual(keyview | other.keys(), set(['six', 'three', 'two', 'four', 'five', 'one']))
-        self.assertEqual(keyview - other.keys(), set(['five', 'one']))
-        self.assertEqual(keyview ^ other.keys(), set(['five', 'one']))
+        self.assertEqual(keyview & other.keys(), {'four', 'six', 'two', 'three'})
+        self.assertEqual(keyview | other.keys(), {'six', 'three', 'two', 'four', 'five', 'one'})
+        self.assertEqual(keyview - other.keys(), {'five', 'one'})
+        self.assertEqual(keyview ^ other.keys(), {'five', 'one'})
 
     def test_get_valuesview(self):
         """
@@ -57,10 +49,10 @@ class TestGraphDict(unittest2.TestCase):
         self.assertEqual(len(valueview), 6)
 
         other = GraphDict({'two': 2, 'three': 3, 'four': 4, 'six': 6})
-        self.assertEqual(valueview & other.values(), set([4, 6, 2, 3]))
-        self.assertEqual(valueview | other.values(), set([1, 2, 3, 4, 5, 6]))
-        self.assertEqual(valueview - other.values(), set([1, 5]))
-        self.assertEqual(valueview ^ other.values(), set([1, 5]))
+        self.assertEqual(valueview & other.values(), {4, 6, 2, 3})
+        self.assertEqual(valueview | other.values(), {1, 2, 3, 4, 5, 6})
+        self.assertEqual(valueview - other.values(), {1, 5})
+        self.assertEqual(valueview ^ other.values(), {1, 5})
 
     def test_get_itemsview(self):
         """
@@ -71,7 +63,8 @@ class TestGraphDict(unittest2.TestCase):
         self.assertItemsEqual(list(itemview), [('one', 1), ('two', 2), ('three', 3), ('four', 4), ('five', 5)])
 
         self.graph['six'] = 6
-        self.assertItemsEqual(list(itemview), [('one', 1), ('two', 2), ('three', 3), ('four', 4), ('five', 5), ('six', 6)])
+        self.assertItemsEqual(list(itemview), [('one', 1), ('two', 2), ('three', 3),
+                                               ('four', 4), ('five', 5), ('six', 6)])
         self.assertEqual(len(itemview), 6)
 
     def test_set_keysview(self):
@@ -237,19 +230,19 @@ class TestGraphDict(unittest2.TestCase):
         graph1 = GraphDict({'three': 3, 'four': 4, 'six': 6})
         graph2 = GraphDict({'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6})
 
-        self.assertEqual(self.graph.intersection(graph1), set(['four', 'three']))
-        self.assertEqual(self.graph.difference(graph1), set(['five', 'two', 'one']))
-        self.assertEqual(self.graph.symmetric_difference(graph1), set(['six', 'five', 'two', 'one']))
-        self.assertEqual(self.graph.union(graph1), set(['six', 'three', 'one', 'four', 'five', 'two']))
+        self.assertEqual(self.graph.intersection(graph1), {'four', 'three'})
+        self.assertEqual(self.graph.difference(graph1), {'five', 'two', 'one'})
+        self.assertEqual(self.graph.symmetric_difference(graph1), {'six', 'five', 'two', 'one'})
+        self.assertEqual(self.graph.union(graph1), {'six', 'three', 'one', 'four', 'five', 'two'})
         self.assertFalse(self.graph.isdisjoint(graph1))
         self.assertFalse(self.graph.issubset(self.graph, propper=True))
         self.assertTrue(self.graph.issubset(self.graph, propper=False))
         self.assertTrue(graph2.issuperset(self.graph, propper=True))
         self.assertTrue(self.graph.issuperset(self.graph, propper=False))
 
-        self.assertEqual(self.graph & graph1, set(['four', 'three']))
-        self.assertEqual(self.graph ^ graph1, set(['six', 'five', 'two', 'one']))
-        self.assertEqual(self.graph | graph1, set(['six', 'three', 'one', 'four', 'five', 'two']))
+        self.assertEqual(self.graph & graph1, {'four', 'three'})
+        self.assertEqual(self.graph ^ graph1, {'six', 'five', 'two', 'one'})
+        self.assertEqual(self.graph | graph1, {'six', 'three', 'one', 'four', 'five', 'two'})
         self.assertFalse(self.graph == graph1)
         self.assertTrue(self.graph != graph1)
         self.assertFalse(self.graph < self.graph)

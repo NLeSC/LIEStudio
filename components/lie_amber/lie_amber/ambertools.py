@@ -29,7 +29,8 @@ def amber_acpype(mol, workdir=None, **kwargs):
     - Sousa da Silva AW, Vranken WF. ACPYPE - AnteChamber PYthon
       Parser interfacE. (2012), BMC Res Notes. 2012 Jul 23;5:367.
       doi: 10.1186/1756-0500-5-367.
-    """
+    """    
+    # ACPYPE executable
     acepype_exe = 'acpype.py'
 
     # Check the input file
@@ -80,6 +81,7 @@ def amber_acpype(mol, workdir=None, **kwargs):
         return output_path
     else:
         logging.error('Acpype failed')
+
 
 
 def amber_reduce(
@@ -166,4 +168,3 @@ def amber_reduce(
                 return out.read()
     else:
         logging.error('Reduce failed, not output file {0}'.format(output))
-    

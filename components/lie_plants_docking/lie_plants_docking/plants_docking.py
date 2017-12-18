@@ -64,25 +64,6 @@ class PlantsDocking(DockingBase):
         self._config = kwargs
         self._workdir = None
 
-    def _prepaire_ligand(self, ligand):
-        """
-        Check and adjust the ligand MOL2 file for use in PLANTS
-
-        PLANTS exclusively uses the MOL2 file format, thus MOL2-files
-        (including bond connetivity) must be provided for all input files.
-        PLANTS expects correct MOL2-atom- and bond-types.
-        This is needed for the correct identification of rotatable bonds and
-        charged functional groups and may influence docking and virtual
-        screening performance.
-
-        TODO: Implement check, perhaps using the SPORES program.
-              Check plants manual.
-
-        :param ligand: ligand file to check
-        """
-
-        return ligand
-
     def results(self):
         """
         Return PLANTS results
@@ -209,13 +190,13 @@ class PlantsDocking(DockingBase):
             self.logging.error('Malformed binding site center definition: {0}'.format(self._config.get('bindingsite_center')), **self.user_meta)
             return False
 
-        # Check ligand
-        ligand = self._prepaire_ligand(ligand)
-
         # Copy files to working directory
-        with open(os.path.join(self._workdir, 'protein.mol2'), 'w') as protein_file:
-            protein_file.write(protein)
-            self._config['protein_file'] = 'protein.mol2'
+        if os.path.isfile(protein):
+            self._config['protein_file'] = protein
+        else:
+            with open(os.path.join(self._workdir, 'protein.mol2'), 'w') as protein_file:
+                protein_file.write(protein)
+                self._config['protein_file'] = 'protein.mol2'
 
         with open(os.path.join(self._workdir, 'ligand.mol2'), 'w') as ligand_file:
             ligand_file.write(ligand)

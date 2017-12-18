@@ -19,6 +19,11 @@ def graph_add(graph1, graph2):
     Nodes and edges from graph2 are added to graph1 without updating the
     respective attributes. The latter can be done by calling the `update`
     function afterwards with the returned graph and graph2.
+
+    :param graph1:  target graph
+    :type graph1:   Graph
+    :param graph2:  source graph
+    :type graph2:   Graph
     """
 
     auto_nid = graph1.auto_nid
@@ -50,6 +55,11 @@ def graph_union(graph1, graph2):
     Nodes and edges are added without updating the respective attributes.
     The latter can be done by calling the `update` function afterwards with
     the returned graph and graph2.
+
+    :param graph1:  target graph
+    :type graph1:   Graph
+    :param graph2:  source graph
+    :type graph2:   Graph
     """
 
     auto_nid = graph1.auto_nid
@@ -61,7 +71,7 @@ def graph_union(graph1, graph2):
 
     for edge in graph1.edges.union(graph2.edges):
         if edge not in graph1.edges:
-            graph1.add_edge(edge, directed=False)
+            graph1.add_edge(edge)
 
     graph1.auto_nid = auto_nid
 
@@ -94,6 +104,10 @@ def graph_update(graph1, graph2, update_edges=True, update_nodes=True):
     Requires graph2 to be fully contained in graph1 based on graph topology
     measured as equality between nodes and edges assessed by node and edge ID.
 
+    :param graph1:  target graph
+    :type graph1:   Graph
+    :param graph2:  source graph
+    :type graph2:   Graph
     :param update_edges: update edge data
     :type update_edges:  bool
     :param update_nodes: update node data

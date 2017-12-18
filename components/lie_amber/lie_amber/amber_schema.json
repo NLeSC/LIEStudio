@@ -10,6 +10,11 @@
             "description": "Path to AMBERHOME",
             "default": ""
         },
+        "acpype_path": {
+            "type": "string",
+            "description": "Path to ACPYPE",
+            "default": "/Users/mvdijk/Documents/WorkProjects/liestudio-master/liestudio/bin/acpype.py"
+        },
         "amber_acpype": {
             "type": "object",
             "description": "ACPYPE program configuration",

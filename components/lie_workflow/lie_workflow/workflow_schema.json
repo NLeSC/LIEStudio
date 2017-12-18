@@ -5,7 +5,6 @@
     "description": "A default LIEStudio workflow",
     "type": "object",
     "properties": {
-        "edge_attr": {},
         "graph": {
             "type": "object",
             "properties": {
@@ -149,7 +148,7 @@
                             "description": "The status of the current task",
                             "type": "string",
                             "default": "ready",
-                            "enum": ["ready","submitted","running","failed","aborted","completed","deactivated"]
+                            "enum": ["ready","submitted","running","failed","aborted","completed","disabled"]
                         },
                         "store_output": {
                             "description": "Store the output of the task to disk",

@@ -196,8 +196,8 @@ class GraphDict(colabc.MutableMapping, dict):
     TODO: should the GraphDict comparison methods return a new GraphDict
           object with the intersection, difference, symmetric-difference
           or union of the two graphs instead of the keys and leave the
-          respective key,value or item based comparison methods upto the
-          KeyView, ValueView and ItemView respectivly?
+          respective key,value or item based comparison methods up to the
+          KeyView, ValueView and ItemView respectively?
     """
 
     __slots__ = ('_storage', '_view')
@@ -555,7 +555,7 @@ class GraphDict(colabc.MutableMapping, dict):
         (propper = True)
 
         :param propper: ensure that both key lists are not the same.
-        :type propper:  bool, True by default
+        :type propper:  :py:bool
         """
 
         self_keys = set(self.keys())
@@ -571,7 +571,7 @@ class GraphDict(colabc.MutableMapping, dict):
         (propper = True)
 
         :param propper: ensure that both key lists are not the same.
-        :type propper:  bool, True by default
+        :type propper:  :py:bool
         """
 
         self_keys = set(self.keys())
@@ -666,7 +666,7 @@ class GraphDict(colabc.MutableMapping, dict):
         Update key/value pairs in also updating the view if needed
 
         :param other: other key/value pairs
-        :type other:  :py:class:dict
+        :type other:  :py:dict
         """
 
         self._storage.update(other)

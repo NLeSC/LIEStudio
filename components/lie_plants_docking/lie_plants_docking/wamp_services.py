@@ -64,6 +64,7 @@ class DockingWampApi(LieApplicationSession):
             self.logger.error('File does not exists: {0}'.format(structure_path))
             return {'result': None}
 
+
     def run_docking(self, session={}, **kwargs):
         """
         Perform a PLANTS (Protein-Ligand ANT System) molecular docking.
@@ -89,7 +90,6 @@ class DockingWampApi(LieApplicationSession):
         jsonschema.validate(plants_config, PLANTS_DOCKING_SCHEMA)
 
         # Run the docking
-        # self.logger.info('Initiate PLANTS docking', **session)
 
         # Prepaire docking directory
         if 'workdir'not in plants_config:
@@ -111,8 +111,6 @@ class DockingWampApi(LieApplicationSession):
             session['status'] = 'failed'
             self.logger.error('PLANTS docking not successful', **session)
             docking.delete()
-
-        #self.logger.info('Finished PLANTS docking', **session)
 
         return {'session': session, 'output': results}
 

@@ -22,7 +22,7 @@ from lie_graph.graph_algorithms import dfs_paths
 from lie_graph.graph_helpers import renumber_id
 from lie_system import WAMPTaskMetaData
 
-from .common import _schema_to_data
+from .workflow_common import _schema_to_data
 
 # Get the task schema definitions from the default task_schema.json file
 TASK_SCHEMA_PATH = os.path.join(os.path.dirname(__file__), 'task_schema.json')
@@ -42,7 +42,7 @@ class _TaskBase(object):
     def status(self, status):
         options = (
             "ready", "submitted", "running", "failed", "aborted",
-            "completed", "deactivated")
+            "completed", "disabled")
         status = status.lower()
         if status in options:
             self.nodes[self.nid]['status'] = status
@@ -81,6 +81,19 @@ class _TaskBase(object):
         self.nodes[self.nid]['session'] = updated_session.dict()
         return self.nodes[self.nid]['session']
 
+    def _process_reference(self, ref):
+        """
+        Resolve reference
+        """
+
+        if ref.startswith('$'):
+            split = ref.strip('$').split('.')
+            ref_nid = int(split[0])
+            ref_key = split[1]
+
+            return self._full_graph.nodes[ref_nid]['output_data'].get(ref_key, None)
+        return ref
+
     def get_input(self):
         """
         Prepaire the input data
@@ -90,12 +103,10 @@ class _TaskBase(object):
         for key, value in self.nodes[self.nid].get('input_data', {}).items():
 
             # Resolve reference
-            if isinstance(value, str) and value.startswith('$'):
-                split = value.strip('$').split('.')
-                ref_nid = int(split[0])
-                ref_key = split[1]
-
-                input_dict[key] = self._full_graph.nodes[ref_nid]['output_data'].get(ref_key, None)
+            if isinstance(value, str):
+                input_dict[key] = self._process_reference(value)
+            elif isinstance(value, list):
+                input_dict[key] = [self._process_reference(v) for v in value]
             else:
                 input_dict[key] = value
 
@@ -147,7 +158,6 @@ class Task(_TaskBase):
 class WampTask(_TaskBase):
 
     def run_task(self, runner, callback, errorback=None):
-
         method_url = six.text_type(self.uri)
         logging.info('Task {0} ({1}) running on {2}'.format(
             self.nid, self.task_name, method_url))
@@ -182,7 +192,7 @@ class BlockingTask(_TaskBase):
         # Get task session
         session = WAMPTaskMetaData(
             metadata=self.nodes[self.nid].get('session', {}))
-
+        
         try:
             output = runner(
                 session=session.dict(), **self.get_input())
@@ -252,17 +262,44 @@ class StartTask(_TaskBase):
 class Choice(_TaskBase):
 
     def run_task(self, runner, callback=None, errorback=None):
+        """
+        Make a choice for one or more connected task based on
+        criteria using the input data.
 
-        connections = self.children(return_nids=True)
-        gofor = random.choice(connections)
+        :param pos: task to choose when evaluation is positive
+        :type pos:  :py:list
+        :param neg: task to choose when evaluation is negative
+        :type pos:  :py:list
+        """
 
-        print("make a choice between: {0}, go for {1}".format(
-            connections, gofor))
-        for task in [t for t in connections if t != gofor]:
-            self._full_graph.nodes[task]['status'] = 'disabled'
+        session = WAMPTaskMetaData(
+            metadata=self.nodes[self.nid].get('session', {}))
 
-        self.nodes[self.nid]['output_data'] = self.nodes[self.nid].pop('input')
-        self.status = 'failed'
+        finput = self.get_input()
+        try:
+            output = runner(
+                session=session.dict(), **finput)
+        except Exception as e:
+            if errorback:
+                return errorback(e, self.nid)
+            else:
+                logging.error(
+                    'Error in running task {0} ({1})'.format(
+                        self.nid, self.task_name))
+                logging.error(e)
+                return
+
+        # Disable edges to tasks not in choice_nids
+        disabled = []
+        choice_nids = output.get('choice', [])
+        for task in self.children():
+            if not task.nid in choice_nids:
+                task.status = 'disabled'
+                disabled.append(str(task.nid))
+        logging.info('Disabled tasks: {0}'.format(','.join(disabled)))
+
+        output.update(finput)
+        callback(output, self.nid)
 
 
 class Mapper(_TaskBase):
@@ -270,7 +307,7 @@ class Mapper(_TaskBase):
     Mapper class
 
     Task that parallelises input from an array to all descending tasks or
-    upto a Collect task that is assigned to collect the output the task
+    upto a task that is assigned to collect the output the task
     lineage created by this mapper class.
 
     Tasks lineages are duplicated dynamically. The mapping procedure may be
@@ -299,19 +336,15 @@ class Mapper(_TaskBase):
         mapped = task_input[map_argument]
         if len(mapped):
 
-            # Pre-process data array
-            # if runner:
-            #     mapped = runner(mapped)
-
             logging.info(
                 'Task {0} ({1}), {2} items to map'.format(
                     self.nid, self.task_name, len(mapped)))
 
             # Get task session
             session = WAMPTaskMetaData(
-                metadata=self.nodes[self.nid].get('session', {}))
+                metadata=self.nodes[self.nid].get('session'))
 
-            # Get the full descendant lineage from this Mapper taks to
+            # Get the full descendant lineage from this Mapper task to
             # the Collect task assigned to the mapper
             collector_task = self._full_graph.query_nodes(
                 {'to_mapper': self.nid})
@@ -324,51 +357,59 @@ class Mapper(_TaskBase):
             else:
                 maptid = self.descendants(return_nids=True)
 
-            # Create subgraph of the mapper tasks lineage.
-            # Call errorback if no task lineage
+            # Create sub graph of the mapper tasks lineage.
+            # Call errorback if no task lineage.
+            # A subgraph is a deep copy of the full graph but with all edges.
+            # remove edges not having any link to the mapped tasks.
             if maptid:
-                subgraph = self._full_graph.getnodes(maptid).copy()
+                subgraph = self._full_graph.getnodes(maptid).copy(clean=False)
+                maptidset = set(maptid)
+                for edge in list(subgraph.edges.keys()):
+                    if not set(edge).intersection(maptidset):
+                        subgraph.remove_edge(edge)
             else:
                 errorback(
                     'Task {0} ({1}), no tasks connected to Mapper task'.format(
                         self.nid, self.task_name), self.nid)
                 return
 
-            # Make a copy of the task lineage subgraph for every data item to
-            # be mapped.
             first_task = maptid[0]
             last_task = maptid[-1]
+            mapper_data_mapping = self._full_graph.edges[(self.nid, first_task)]
+            mapped_children = [first_task]
             for task in range(len(mapped)-1):
 
                 g, tidmap = renumber_id(subgraph, self._full_graph._nodeid)
                 self._full_graph += g
-                self._full_graph.add_edge(self.nid, tidmap[first_task])
 
                 if collector_task:
                     self._full_graph.add_edge(
                         tidmap[last_task], collector_task.nid)
+
                 first_task = tidmap[first_task]
                 last_task = tidmap[last_task]
+                mapped_children.append(first_task)
 
-            for i, child in enumerate(
-                    [t for t in self.children() if t.status == 'ready']):
+            for i, child in enumerate(mapped_children):
+
+                child = self._full_graph.getnodes([child])
 
                 # Define input for the copied task
                 if 'input_data' not in child:
                     self._full_graph.nodes[child.nid]['input_data'] = {}
 
-                # List item to dict if needed
-                tomap = mapped[i]
-                if not isinstance(tomap, dict):
-                    tomap = {map_argument: tomap}
-
-                # TODO: Define data mapper here
-                child['input_data'].update(tomap)
-
                 # Add all other input arguments to
                 for key, value in task_input.items():
                     if not key == map_argument:
                         child['input_data'][key] = value
+
+                # List item to dict if needed and perform data mapping
+                tomap = mapped[i]
+                if not isinstance(tomap, dict):
+                    datamap = mapper_data_mapping.get('data_mapping', {})
+                    datamap = datamap.get(map_argument, map_argument)
+                    tomap = {datamap: tomap}
+                child['input_data'].update(tomap)
 
             session.status = 'completed'
             callback({'session': session.dict()}, self.nid)
@@ -378,71 +419,10 @@ class Mapper(_TaskBase):
                 self.nid, self.task_name), self.nid)
 
 
-class Collect(_TaskBase):
-    """
-    Reducer class
-
-    Waits for all parent tasks to finish and collects the output
-    """
-
-    def run_task(self, runner, callback, errorback=None):
-
-        session = WAMPTaskMetaData(
-            metadata=self.nodes[self.nid].get('session', {}))
-
-        # Get all nodes connected to self. In the directed workflow graph these
-        # are the ancestors
-        ancestors = [nid for nid, adj in self.adjacency.items()
-                     if self.nid in adj]
-
-        # Check if there are failed tasks among the ancestors and if we are
-        # allowed to continue with less
-        failed_ancestors = [
-            tid for tid in ancestors if self._full_graph.nodes[tid]['status']
-            in ('failed', 'aborted')]
-        if failed_ancestors:
-            logging.error(
-                'Failed parent tasks detected. Unable to collect all output')
-            session.status = 'failed'
-            session._metadata['utime'] = int(time.time())
-            callback({'session': session.dict()}, self.nid)
-
-        # Check if the ancestors are al completed
-        if all([self._full_graph.nodes[tid]['status'] in
-                ('completed', 'disabled') for tid in ancestors]):
-            msg = 'Task {0} ({1}): Output of {2} parent tasks available, continue'
-            logging.info(msg.format(self.nid, self.task_name, len(ancestors)))
-
-            # Collect output of previous tasks and apply data mapper
-            collected_output = []
-            for tid in ancestors:
-                mapper = self._full_graph.edges[(tid, self.nid)].get('data_mapping', {})
-                new_dict = {mapper.get(k, k): v for k, v in
-                            self._full_graph.nodes[tid]['output_data'].items()}
-                collected_output.append(new_dict)
-
-            session.status = 'completed'
-            session._metadata['utime'] = int(time.time())
-
-            output = {'session': session.dict()}
-            output.update(runner(collected_output))
-            callback(output, self.nid)
-
-        else:
-            # Output collection not complete. Reset task status to ready and
-            # evaluate again at next pass
-            logging.info(
-                'Task {0} ({1}): Not all output available yet'.format(
-                    self.nid, self.task_name))
-            self.status = 'ready'
-            callback({'session': session.dict()}, self.nid)
-
-
 WORKFLOW_ORM = GraphORM(inherit=False)
 WORKFLOW_ORM.map_node(StartTask, {'task_type': 'Start'})
 WORKFLOW_ORM.map_node(Task, {'task_type': 'Task'})
 WORKFLOW_ORM.map_node(Choice, {'task_type': 'Choice'})
-WORKFLOW_ORM.map_node(Collect, {'task_type': 'Collect'})
 WORKFLOW_ORM.map_node(BlockingTask, {'task_type': 'BlockingTask'})
 WORKFLOW_ORM.map_node(WampTask, {'task_type': 'WampTask'})
 WORKFLOW_ORM.map_node(Mapper, {'task_type': 'Mapper'})

@@ -71,6 +71,10 @@ def mol_write(molobject, mol_format=None, file_path=None, fallback='webel'):
     assert mol_format in toolkit_driver.informats, logging.error('Molecular file format "{0}" not supported by {1}'.format(mol_format, toolkit))
 
     output = molobject.write(mol_format, file_path, overwrite=True)
+
+    if file_path and os.path.isfile(file_path):
+        return file_path
+
     return output
 
 
@@ -89,8 +93,7 @@ def mol_attributes(molobject):
     return attributes
 
 
-def mol_addh(
-        molobject, polaronly=False, correctForPH=False, pH=7.4):
+def mol_addh(molobject, polaronly=False, correctForPH=False, pH=7.4):
 
     if molobject.toolkit == 'pybel':
         logging.info(
@@ -201,4 +204,10 @@ def mol_combine_rotations(molobject, rotations=[]):
         rotated_file.write(rotated_mol)
     rotated_file.close()
 
-    return rotated_mols
+    combined = None
+    if os.path.isfile('multipleSD.mol2'):
+        with open('multipleSD.mol2', 'r') as cf:
+            combined = cf.read()
+        os.remove('multipleSD.mol2')
+
+    return combined

@@ -11,13 +11,14 @@ import os
 import json
 import time
 import jsonschema
+import logging
 
 from twisted.logger import Logger
 
-from lie_graph.io.io_json_format import read_dict, write_json
-from lie_graph.io.io_helpers import _open_anything
+from lie_graph.graph_io.io_json_format import read_dict, write_json
+from lie_graph.graph_io.io_helpers import _open_anything
 
-from .common import WorkflowError, _schema_to_data
+from .workflow_common import WorkflowError, _schema_to_data
 from .workflow_task_specs import WORKFLOW_ORM
 
 # Path to default workflow JSON schema part of the module
@@ -65,7 +66,8 @@ class WorkflowSpec(object):
         if init_default:
             self.new()
 
-    def _parse_schema(self, schema):
+    @staticmethod
+    def _parse_schema(schema):
         """
         Parse a workflow JSON schema from various input sources
 
@@ -187,7 +189,7 @@ class WorkflowSpec(object):
                 logging.info(
                     'Save workflow {0} to file: {1}'.format(
                         getattr(self.workflow, 'title', ''), path))
-            except:
+            except IOError:
                 logging.error(
                     'Unable to write workflow to file: {0}'.format(path))
 
@@ -236,7 +238,7 @@ class WorkflowSpec(object):
 
         return nid
 
-    def connect_task(self, task1, task2, data_mapping=None):
+    def connect_task(self, task1, task2, **kwargs):
         """
         Connect tasks by task ID (graph nid)
 
@@ -247,18 +249,18 @@ class WorkflowSpec(object):
         :param task1:         first task of two tasks to connect
         :type task1:          :py:int
         :param task2:         second task of two tasks to connect
-        :type task3:          :py:int
+        :type task2:          :py:int
         :param data_mapping:  output-input data mapping
         :type data_mapping:   :py:dict
+        :param data_select:   restrict input to selected keywords
+        :type data_select:    :py:list
         """
+
         wf_nodes = self.workflow.nodes
         assert task1 in wf_nodes, 'Task {0} not in workflow'.format(task1)
         assert task2 in wf_nodes, 'Task {0} not in workflow'.format(task2)
 
-        if data_mapping:
-            self.workflow.add_edge(task1, task2, data_mapping=data_mapping)
-        else:
-            self.workflow.add_edge(task1, task2, data_mapping)
+        self.workflow.add_edge(task1, task2, **kwargs)
 
     def get_task(self, nid):
         """

@@ -3,7 +3,7 @@
 import logging as logger
 
 from .graph_helpers import GraphException
-from .io.io_helpers import _open_anything
+from .graph_io.io_helpers import _open_anything
 
 
 class _NodeEdgeBase(object):
@@ -65,11 +65,11 @@ class _NodeEdgeBase(object):
         __setattr__ is resolved in the following order:
 
         1 self.__dict__ setter at class initiation
-        2 graph setter handeled by property methods
+        2 graph setter handled by property methods
         3 `set` method for existing nodes/edges dictionary attributes.
         3 self.__dict__ only for existing and new class attributes
 
-        :param name:  attribute name.
+        :param key:  attribute name.
         :param value: attribute value
         """
 
@@ -90,7 +90,7 @@ class _NodeEdgeBase(object):
 
         Set values using dictionary style access in the following order:
 
-        1 graph setter handeled by property methods
+        1 graph setter handled by property methods
         2 self.__dict__ only for existing keys
         3 `set` method for existing and new nodes/edges key,value pairs
 
@@ -123,7 +123,7 @@ class EdgeTools(_NodeEdgeBase):
 
         return False
 
-    def get(self, key=None, defaultattr=None, default=None, **kwargs):
+    def get(self, key=None, defaultattr=None, default=None):
         """
         Return edge value
 
@@ -191,7 +191,7 @@ class NodeTools(_NodeEdgeBase):
             return key in self.nodes[self.nid]
         return False
 
-    def get(self, key=None, default=None, defaultattr=None, **kwargs):
+    def get(self, key=None, default=None, defaultattr=None):
         """
         Return node value
 

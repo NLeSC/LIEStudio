@@ -16,7 +16,6 @@ When usig this component in scientific work please cite:
 """
 
 import os
-import sys
 
 __module__    = 'lie_amber'
 __docformat__ = 'restructuredtext'
@@ -30,7 +29,7 @@ __copyright__ = "Copyright (c) VU University, Amsterdam"
 __rootpath__  = os.path.dirname(__file__)
 
 from .ambertools import *
-from .settings   import AMBER_SCHEMA, SETTINGS
+from .settings import AMBER_SCHEMA, SETTINGS
 
 # Define module public API
 settings = SETTINGS

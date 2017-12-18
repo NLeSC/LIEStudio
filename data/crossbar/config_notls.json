@@ -327,6 +327,26 @@
                   "password": "liepw@#",
                   "authmethod": "ticket"  
                 }
+              },
+              {
+                "type": "wamplet",
+                "package": "pylie",
+                "realm": "liestudio",
+                "entrypoint": "wamp_services",
+                "transport": {
+                  "type": "websocket",
+                  "endpoint": {
+                     "type": "tcp",
+                     "host":"localhost",
+                     "port": 8080
+                  },
+                  "url": "ws://localhost:8080/ws"
+                },
+                "extra": {
+                  "authid": "lieadmin",
+                  "password": "liepw@#",
+                  "authmethod": "ticket"
+                }
               }
             ]
         },

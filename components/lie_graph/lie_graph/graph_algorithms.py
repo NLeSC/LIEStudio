@@ -10,17 +10,14 @@ def node_neighbors(graph, nid):
     """
     Return de neighbor nodes of the node.
 
-    ..  note:: if the current graph is a subgraph view (is_view == True) of
+    ..  note:: if the current graph is a sub graph view (is_view == True) of
                the parent graph than only the neighbor nodes represented by
-               the subgraph will be considered.
+               the sub graph will be considered.
 
     :param graph: Graph to query
     :type graph:  Graph class instance
-    :param node:  node to return neighbors for
-    :type node:   lie_graph.graph_mixin.EdgeTools.nid
-
-    TODO: This is a duplicate of the node_neighbors function in
-          graph_axis_methods here to prevent circular import. Reorganize!
+    :param nid:   node ID to return neighbors for
+    :type nid:    :py:int
     """
 
     if graph.is_masked:
@@ -36,7 +33,7 @@ def dfs(graph, root, method='dfs', max_depth=10000):
     General implementation of depth-first-search algorithm.
 
     The real power of the dfs method is combining it with the
-    graph query methods. These allow subgraphs to be selected
+    graph query methods. These allow sub graphs to be selected
     based on node or edge attributes such as graph directionality
     or edge weight.
 
@@ -46,7 +43,7 @@ def dfs(graph, root, method='dfs', max_depth=10000):
     :type root:       node ID or Node object
     :param method:    search method. Depth-first search (dfs, default)
                       and Breath-first search (bfs) supported.
-    :type method:     string
+    :type method:     :py:str
     :param max_depth: maximum search depth
     :type max_depth:  int, default equals 10000
     """
@@ -58,7 +55,6 @@ def dfs(graph, root, method='dfs', max_depth=10000):
     stack_pop = -1
     if method == 'bfs':
         stack_pop = 0
-    #logger.debug('dfs search method set to: {0}'.format(method))
 
     visited = []
     stack = [root.nid]
@@ -81,47 +77,66 @@ def dfs_paths(graph, start, goal, method='dfs'):
     Return all possible paths between two nodes.
 
     Setting method to 'bfs' returns the shortest path first
+
+    :param graph:     graph to search
+    :type graph:      graph class instance
+    :param start:     root node to start the search from
+    :type start:      :py:int
+    :param goal:      target node
+    :type goal:       :py:int
+    :param method:    search method. Depth-first search (dfs, default)
+                      and Breath-first search (bfs) supported.
+    :type method:     :py:str
+
+    :rtype:           :py:list
     """
 
     # Define the search method
     stack_pop = -1
     if method == 'bfs':
         stack_pop = 0
-    #logger.debug('dfs search method set to: {0}'.format(method))
 
     stack = [(start, [start])]
     while stack:
         (vertex, path) = stack.pop(stack_pop)
         neighbors = node_neighbors(graph, vertex)
-        for next in set(neighbors) - set(path):
-            if next == goal:
-                yield path + [next]
+        for next_node in set(neighbors) - set(path):
+            if next_node == goal:
+                yield path + [next_node]
             else:
-                stack.append((next, path + [next]))
+                stack.append((next_node, path + [next_node]))
 
 
 def dijkstra_shortest_path(graph, start, goal, weight='weight'):
     """
     Dijkstra algorithm for finding shortest paths.
 
-    In constrast to depth- or breath first search, Dijkstra's algorithm
+    In contrast to depth- or breath first search, Dijkstra's algorithm
     supports weighted graphs using a priority queue.
 
     Original publication:
     Dijkstra, E. W. (1959). "A note on two problems in connexion with graphs"
     Numerische Mathematik 1: 269–271. doi:10.1007/BF01386390.
 
-    :param weight: edge attribute to use as edge weight
-    :type weight: string
+    :param graph:     graph to search
+    :type graph:      graph class instance
+    :param start:     root node to start the search from
+    :type start:      :py:int
+    :param goal:      target node
+    :type goal:       :py:int
+    :param weight:    edge attribute to use as edge weight
+    :type weight:     :py:str
+
+    :rtype:           :py:list
     """
 
     adjacency = graph.adjacency()
 
     # Flatten linked list of form [0,[1,[2,[]]]]
-    def flatten(L):
-        while len(L) > 0:
-            yield L[0]
-            L = L[1]
+    def flatten(linked_list):
+        while len(linked_list) > 0:
+            yield linked_list[0]
+            linked_list = linked_list[1]
 
     q = [(0, start, ())]
     visited = []
@@ -158,6 +173,8 @@ def brandes_betweenness_centrality(graph, normalized=False, weight='weight'):
     :type normalized:  bool
     :param weight:     edge attribute to use as edge weight
     :type weight:      string
+
+    :rtype:            :py:dict
     """
 
     nids = graph.nodes.keys()
@@ -207,10 +224,10 @@ def brandes_betweenness_centrality(graph, normalized=False, weight='weight'):
     if m == 0:
         m = 1
 
-    return dict([(id, w / m) for id, w in betweenness.items()])
+    return dict([(nid, w / m) for nid, w in betweenness.items()])
 
 
-def eigenvector_centrality(graph, normalized=True, reversed=True, rating={},
+def eigenvector_centrality(graph, normalized=True, reverse=True, rating={},
                            start=None, iterations=100, tolerance=0.0001):
     """
     Eigenvector centrality for nodes in the graph (like Google's PageRank).
@@ -234,7 +251,7 @@ def eigenvector_centrality(graph, normalized=True, reversed=True, rating={},
     """
 
     G = graph.nodes.keys()
-    #W = adjacency(graph, directed=True, reversed=reversed)
+    W = adjacency(graph, directed=True, reverse=reverse)
 
     def _normalize(x):
         s = sum(x.values())
@@ -269,12 +286,12 @@ def eigenvector_centrality(graph, normalized=True, reversed=True, rating={},
                 x = dict([(id, w / m) for id, w in x.iteritems()])
             return x
 
-    #raise NoConvergenceError
-    warn("node weight is 0 because eigenvector_centrality() did not converge.", Warning)
+    # raise NoConvergenceError
+    logger.warn("node weight is 0 because eigenvector_centrality() did not converge.", Warning)
     return dict([(n, 0) for n in G])
 
 
-def adjacency(graph, directed=False, reversed=False, stochastic=False, heuristic=None):
+def adjacency(graph, directed=False, reverse=False, stochastic=False, heuristic=None):
     """
     An edge weight map indexed by node id's.
 
@@ -292,7 +309,7 @@ def adjacency(graph, directed=False, reversed=False, stochastic=False, heuristic
 
     for e in graph.edges:
         id1, id2 = e
-        if reversed:
+        if reverse:
             id1, id2 = reversed(e)
 
         v[id1][id2] = 1.0 - graph.edges[e].get('weight', 1.0) * 0.5
@@ -342,6 +359,8 @@ def degree(graph, nodes, weight=None):
     nodes are multiplied by a weight factor stored as attribute in
     the node.
 
+    :param graph:  Graph to return the degree of nodes for
+    :type graph:   Graph class instance
     :param nodes:  nodes to return the degree for, None uses all
                    nodes in the graph.
     :type nodes:   list
@@ -353,8 +372,7 @@ def degree(graph, nodes, weight=None):
 
     not_in_graph = [nid for nid in nodes if nid not in graph.nodes]
     if not_in_graph:
-        logging.error(
-            'Nodes {0} not in graph'.format(not_in_graph))
+        logger.error('Nodes {0} not in graph'.format(not_in_graph))
 
     if weight:
         for node in nodes:

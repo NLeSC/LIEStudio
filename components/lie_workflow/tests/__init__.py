@@ -15,6 +15,7 @@ import logging
 # Init basic logging
 logging.basicConfig(level=logging.DEBUG)
 
+
 def module_test_suite():
     """
     Run lie_workflow module unit tests

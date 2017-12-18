@@ -30,8 +30,7 @@ def _flatten_nested_dict(graph_dict, parent_key='', sep='.'):
 
         # parse key to string if needed
         if not(isinstance(key, str) or isinstance(key, unicode)):
-            msg = 'Dictionary key {0} of type {1}. Parse to unicode'
-            logging.debug(msg.format(key, type(key))
+            logging.debug('Dictionary key {0} of type {1}. Parse to unicode'.format(key, type(key))
             key = unicode(key)
 
         new_key = unicode(parent_key + sep + key if parent_key else key)
@@ -183,8 +182,8 @@ class ConfigHandler(Graph, GraphAxisMethods):
         Returns subdictionaries from root to leafs for nested dictionaries
         similar to the default dict behaviour.
 
-        :param name: attribute name
-        :return:     subdirectory for nested keys, value for unique keys.
+        :param key: attribute name
+        :return:    subdirectory for nested keys, value for unique keys.
         """
 
         if key == 'nid':
@@ -207,9 +206,9 @@ class ConfigHandler(Graph, GraphAxisMethods):
         Returns subdictionaries from root to leafs for nested dictionaries
         similar to the default dict behaviour.
 
-        :param name: attribute name
-        :type name:  str
-        :return:     subdirectory for nested keys, value for unique keys.
+        :param key: attribute name
+        :type key:  :py:str
+        :return:    subdirectory for nested keys, value for unique keys.
         """
 
         query = self.find('{0}{1}'.format(self.sep, key))
@@ -289,7 +288,7 @@ class ConfigHandler(Graph, GraphAxisMethods):
         3 self.__dict__ only for existing keys
         4 config setter for existing and new keys,value pairs
 
-        :param name:  attribute name.
+        :param key:   attribute name.
         :param value: attribute value
         """
 

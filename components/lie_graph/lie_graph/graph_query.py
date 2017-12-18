@@ -51,7 +51,8 @@ class GraphQuery(object):
 
         return query_object
 
-    def _attr_match(self, source, query):
+    @staticmethod
+    def _attr_match(source, query):
 
         query = set(query.items())
 

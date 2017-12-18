@@ -10,6 +10,7 @@ import os
 import json
 import jsonschema
 import tempfile
+import shutil
 
 from autobahn import wamp
 
@@ -57,7 +58,6 @@ class AmberWampApi(LieApplicationSession):
 
     @wamp.register(u'liestudio.amber.reduce')
     def run_amber_reduce(self, structure=None, session={}, **kwargs):
-
         # Retrieve the WAMP session information
         session = WAMPTaskMetaData(metadata=session).dict()
 

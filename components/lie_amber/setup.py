@@ -39,7 +39,7 @@ setup(
     package_data={'': ['*.json']},
     py_modules=[distribution_name],
     include_package_data=True,
-    install_requires=['executor'],
+    install_requires=['executor', 'jsonschema'],
     zip_safe=True,
     entry_points={
         'autobahn.twisted.wamplet': [

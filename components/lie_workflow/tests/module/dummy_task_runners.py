@@ -79,7 +79,7 @@ def calculate_accumulated_task_runtime(workflow):
     
     return runtime
     
-def task_runner(session={}, **kwargs):
+def task_runner(session=None, **kwargs):
     """
     Run a task based on the information in the task_data.
     Task_data is validated according to the JSON task schema
@@ -90,7 +90,7 @@ def task_runner(session={}, **kwargs):
     jsonschema.validate(kwargs, dummy_task_schema_input)
     
     # Retrieve the WAMP session information
-    session = WAMPTaskMetaData(metadata=session)
+    session = WAMPTaskMetaData(metadata=session or {})
     
     # Simulate running the task
     time.sleep(kwargs.get('sleep',0))
@@ -115,15 +115,16 @@ def task_runner(session={}, **kwargs):
     
     return {'session': session.dict(), 'dummy': output}
 
-def reduce_function(task_data):
+def reduce_function(session=None, **kwargs):
     """
     Dummy test reducer function taking the 'dummy' output from all previous
     tasks and adding them together
     """
     
-    total = 0
-    for output in task_data:
-        total += output.get('dummy',0)
-    
-    return {'dummy': total}
+    session = WAMPTaskMetaData(metadata=session or {})
+    session.status = 'completed'
+    session._metadata['utime'] = int(time.time())
+
+    output = {'session': session.dict(), 'dummy': len(kwargs.get('dummy',[]))}
+    return output
     

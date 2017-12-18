@@ -72,8 +72,8 @@ class GraphORM(object):
 
         :param cls:        class to map
         :type cls:         class
-        :param edge_attr:  edge attributes to match
-        :type edge_attr:   :py:class:dict
+        :param node_attr:  node attributes to match
+        :type node_attr:   :py:class:dict
         :param kwargs:     additional keyword arguments to add to matching
                            dictionary
         """
@@ -88,7 +88,7 @@ class GraphORM(object):
         matching_rules.update(kwargs)
         assert len(matching_rules) > 0, 'No node attribute matching rules defined for ORM class: {0}'.format(cls)
 
-        for k,v in matching_rules.items():
+        for k, v in matching_rules.items():
             if k not in self._node_mapping:
                 self._node_mapping[k] = []
             self._node_mapping[k].append(v)
@@ -117,7 +117,7 @@ class GraphORM(object):
         matching_rules.update(kwargs)
         assert len(matching_rules) > 0, 'No edge attribute matching rules defined for ORM class: {0}'.format(cls)
 
-        for k,v in matching_rules.items():
+        for k, v in matching_rules.items():
             if k not in self._edge_mapping:
                 self._edge_mapping[k] = []
             self._edge_mapping[k].append(v)
@@ -153,7 +153,7 @@ class GraphORM(object):
         is_edges = all([type(i) in (tuple, list) for i in objects])
         if not is_edges:
 
-            is_nodes = all([type(i) in (int, str) for i in objects])
+            is_nodes = all([type(i) in (int, str, unicode) for i in objects])
             assert is_nodes, 'Query need to be only nodes or only edges not mixed.'
 
         # Get the node/edge attributes to match against
@@ -161,12 +161,12 @@ class GraphORM(object):
         for i in objects:
             attr = graph.attr(i)
             if isinstance(attr, dict):
-                query.extend([(k,v) for k,v in attr.items() if not type(v) in (list,dict)])
+                query.extend([(k, v) for k, v in attr.items() if not type(v) in (list, dict)])
 
         # query matching based on set operation, does not work for unhashable types
         try:
             query = set(query)
-        except BaseException:
+        except TypeError:
             logger.error('Unable to build query')
             query = set([])
 

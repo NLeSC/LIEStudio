@@ -182,19 +182,40 @@ class GraphAxis(Graph):
         if return_nids:
             return np
         return self.getnodes(np)
+    
+    def all_parents(self, node=None, return_nids=False):
+        """
+        Get all parent nodes to the source node relative to the graph root
+    
+        :param node:         node to define parents of
+        :type node:          mixed
+        :param return_nids:  return parent nid instead of a new graph object
+                             representing the selection
+        :type return_nids:   bool
 
+        :return:             parent nodes
+        :rtype:              Graph object or list
+        """
+        
+        nid = node or self.nid
+        anp = node_all_parents(self, nid, self.root)
+        
+        if return_nids:
+            return anp
+        return self.getnodes(anp)
+        
     def siblings(self, node=None, return_nids=False):
         """
         Get the siblings of the source node
 
-        :param node: source node to start search from
-        :type node:  mixed
+        :param node:         source node to start search from
+        :type node:          mixed
         :param return_nids:  return a list of node ID's (nid) instead of a new
                              graph object representing the selection
         :type return_nids:   bool
 
-        :return:     sibling node nids
-        :rtype:      list
+        :return:             sibling nodes
+        :rtype:              Graph object or list
         """
 
         nid = node or self.nid
