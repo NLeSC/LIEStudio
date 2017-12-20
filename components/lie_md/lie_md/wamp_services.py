@@ -6,14 +6,18 @@ file: wamp_services.py
 WAMP service methods the module exposes.
 """
 
-from autobahn import wamp
+from autobahn.wamp.types import RegisterOptions
 from cerise_interface import (
     call_cerise_gromit, create_cerise_config)
 from lie_system import LieApplicationSession, WAMPTaskMetaData
 from lie_md.settings import SETTINGS
 from md_config import set_gromacs_input
 from pymongo import MongoClient
+from twisted.internet.defer import inlineCallbacks
+from twisted.logger import Logger
 import os
+
+logger = Logger()
 
 
 class MDWampApi(LieApplicationSession):
@@ -30,9 +34,19 @@ class MDWampApi(LieApplicationSession):
         if self.db is None:
             host = os.getenv('MONGO_HOST', 'localhost')
             self.db = MongoClient(
-                host=host, port=27017, serverSelectionTimeoutMS=1)['liestudio']
+                host=host, port=27017, serverSelectionTimeoutMS=1)['mdstudio']
 
-    @wamp.register(u'liestudio.gromacs.liemd')
+    @inlineCallbacks
+    def onRun(self, details):
+        """
+        Register WAMP MD simulation with support for `roundrobin` load
+        balancing.
+        """
+        # Register WAMP methods
+        yield self.register(
+            self.run_gromacs_liemd, u'liestudio.gromacs.liemd',
+            options=RegisterOptions(invoke=u'roundrobin'))
+
     def run_gromacs_liemd(
             self, session={}, path_cerise_config=None, cwl_workflow=None,
             protein_pdb=None, protein_top=None, ligand_pdb=None,
@@ -54,6 +68,7 @@ class MDWampApi(LieApplicationSession):
         identifiers is expected, for example:
         residues=[1, 5, 7, 8]
         """
+        logger.info("starting liemd task_id:{}".format(session['task_id']))
         workdir = kwargs.get('workdir', os.getcwd())
 
         # Retrieve the WAMP session information
