@@ -3,106 +3,6 @@ import os
 import sys
 import unittest
 
-pybel = indy = ironable = rdk = cdk = webel = opsin = jchem = None
-try:
-    import pybel  # From Open Babel
-except ImportError:
-    pass
-try:
-    from cinfony import cdk
-except (RuntimeError, ImportError, KeyError):
-    pass
-try:
-    from cinfony import pybel
-except (ImportError, AttributeError, KeyError):
-    pass
-try:
-    from cinfony import rdk
-except ImportError:
-    pass
-try:
-    from cinfony import opsin
-except (ImportError, KeyError):
-    pass
-try:
-    from cinfony import indy
-except (IOError, ImportError, KeyError):
-    pass
-try:
-    from cinfony import webel
-except ImportError:
-    pass
-try:
-    from cinfony import jchem
-except (NameError, RuntimeError, ImportError, KeyError):
-    pass
-
-try:  # Define next() for Jython 2.5
-    next
-except (NameError):
-    next = lambda x: x.next()
-
-
-class myTestCase(unittest.TestCase):
-    """Additional methods not present in Jython 2.2"""
-
-    # Taken from unittest.py in Python 2.5 distribution
-    def assertFalse(self, expr, msg=None):
-        "Fail the test if the expression is true."
-        if expr:
-            raise self.failureException(msg)
-
-    def assertTrue(self, expr, msg=None):
-        """Fail the test unless the expression is true."""
-        if not expr:
-            raise self.failureException(msg)
-
-    def assertAlmostEqual(self, first, second, places=7, msg=None):
-        """Fail if the two objects are unequal as determined by their
-           difference rounded to the given number of decimal places
-           (default 7) and comparing to zero.
-
-           Note that decimal places (from zero) are usually not the same
-           as significant digits (measured from the most signficant digit).
-        """
-        if round(second-first, places) != 0:
-            raise self.failureException(
-                  (msg or '%r != %r within %r places' %
-                   (first, second, places)))
-
-
-class TestOpsin(myTestCase):
-    toolkit = opsin
-
-    def testconversion(self):
-        """Convert from acetylsaliclyic acid to other formats"""
-        mol = self.toolkit.readstring("iupac", "benzene")
-        self.assertEqual(mol.write("smi"), "C1=CC=CC=C1")
-        self.assertEqual(
-            mol.write("inchi"), "InChI=1/C6H6/c1-2-4-6-5-3-1/h1-6H")
-        mol.write("cml")
-
-    def testnoconversion(self):
-        """A failed conversion - should raise IOError"""
-        self.assertRaises(
-            IOError, self.toolkit.readstring, "iupac", "Nosuchname")
-
-    def testnoformats(self):
-        """No such format - should raise ValueError"""
-        self.assertRaises(
-            ValueError, self.toolkit.readstring, "noel", "benzene")
-
-    def testwritefile(self):
-        """Test writing a file"""
-        if os.path.isfile("tmp.cml"):
-            os.remove("tmp.cml")
-        mol = self.toolkit.readstring("iupac", "benzene")
-        mol.write("cml", "tmp.cml")
-        self.assertTrue(os.path.isfile("tmp.cml"))
-        self.assertRaises(IOError, mol.write, "cml", "tmp.cml")
-        mol.write("cml", "tmp.cml", overwrite=True)
-        os.remove("tmp.cml")
-
 
 class TestToolkit(myTestCase):
 
@@ -111,15 +11,6 @@ class TestToolkit(myTestCase):
                      self.toolkit.readstring("smi", "CCCN")]
         self.head = list(self.toolkit.readfile("sdf", "head.sdf"))
         self.atom = self.head[0].atoms[1]
-
-    def testattributes(self):
-        """Test attributes like informats, descs and so on"""
-        informats, outformats = self.toolkit.informats, self.toolkit.outformats
-        self.assertNotEqual(len(self.toolkit.informats.keys()), 0)
-        self.assertNotEqual(len(self.toolkit.outformats.keys()), 0)
-        self.assertNotEqual(len(self.toolkit.descs), 0)
-        self.assertNotEqual(len(self.toolkit.forcefields), 0)
-        self.assertNotEqual(len(self.toolkit.fps), 0)
 
     def testInChI(self):
         """Test InChI generation"""
@@ -425,20 +316,6 @@ class TestOBabel(TestToolkit):
         self.assertRaises(AttributeError, self.RSaccesstest)
 
 
-class TestJybel(TestOBabel):
-    pass
-
-
-class TestIronable(TestJybel):
-    def testDraw(self):
-        """No creating a 2D depiction"""
-        pass
-
-
-class TestPybel(TestOBabel):
-    toolkit = pybel
-
-
 class TestRDKit(TestToolkit):
     toolkit = rdk
     tanimotoresult = 1/3.
@@ -664,41 +541,3 @@ class TestJchem(TestToolkit):
         self.assertAlmostEqual(self.mols[0].molwt, 58.12, 2)
         self.assertEqual(len(self.mols[0].atoms), 4)
         self.assertRaises(AttributeError, self.RSaccesstest)
-
-
-class TestCDKJPype(TestCDK):
-    def testDraw(self):
-        """No depiction supported I'm afraid"""
-        pass
-
-
-if __name__ == "__main__":
-    if os.path.isfile("testoutput.txt"):
-        os.remove("testoutput.txt")
-
-    lookup = {
-        'cdk': TestCDK, 'obabel': TestOBabel, 'rdk': TestRDKit,
-        'webel': TestWebel, 'opsin': TestOpsin, 'indy': TestIndigo,
-        'pybel': TestPybel, 'jchem': TestJchem}
-    if sys.platform[:4] == "java":
-        lookup['obabel'] = TestJybel
-        del lookup['rdk']
-    elif sys.platform[:3] == "cli":
-        lookup['obabel'] = TestIronable
-        del lookup['rdk']
-        del lookup['cdk']
-        del lookup['jchem']
-        del lookup['opsin']
-    else:
-        lookup['cdk'] = TestCDKJPype
-
-    # Only run Pybel tests if specifically asked
-    testcases = list(lookup.values()).remove(TestPybel)
-
-    if len(sys.argv) > 1:
-        testcases = [lookup[x] for x in sys.argv[1:]]
-
-    for testcase in testcases:
-        print("\n\n\nTESTING %s\n%s\n\n" % (testcase.__name__, "== "*10))
-        myunittest = unittest.defaultTestLoader.loadTestsFromTestCase(testcase)
-        unittest.TextTestRunner(verbosity=1).run(myunittest)

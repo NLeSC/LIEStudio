@@ -19,16 +19,18 @@ from Bio.PDB.PDBIO import PDBIO
 from Bio.PDB.PDBParser import PDBParser
 
 from lie_system import LieApplicationSession, WAMPTaskMetaData
-from lie_structures import settings
+from lie_structures import settings, toolkits
 from lie_structures.settings import _schema_to_data, STRUCTURES_SCHEMA, BIOPYTHON_SCHEMA
-from lie_structures.cheminfo_utils import (
-     mol_addh, mol_attributes, mol_make3D, mol_read, mol_removeh, mol_write, mol_combine_rotations)
+from lie_structures.cheminfo_wamp.cheminfo_descriptors_wamp import Chemi nfoDescriptorsWampApi
+from lie_structures.cheminfo_wamp.cheminfo_molhandle_wamp import CheminfoMolhandleWampApi
+from lie_structures.cheminfo_wamp.cheminfo_fingerprints_wamp import CheminfoFingerprintsWampApi
 
 STRUCTURES_SCHEMA = json.load(open(STRUCTURES_SCHEMA))
 BIOPYTHON_SCHEMA = json.load(open(BIOPYTHON_SCHEMA))
 
 
-class StructuresWampApi(LieApplicationSession):
+class StructuresWampApi(LieApplicationSession, CheminfoDescriptorsWampApi, CheminfoMolhandleWampApi,
+                        CheminfoFingerprintsWampApi):
     """
     Structure database WAMP methods.
     """
@@ -53,9 +55,15 @@ class StructuresWampApi(LieApplicationSession):
             "Return structure: {structure}",
             structure=structure, **self.session_config.dict())
 
+    @wamp.register(u'liestudio.structures.supported_toolkits')
+    def supported_toolkits(self, session=None):
+
+        # Retrieve the WAMP session information
+        session = WAMPTaskMetaData(metadata=session)
+
         # Pack result in session
         session.status = 'completed'
-        return {'session': session.dict(), 'structure': result}
+        return {'session': session.dict(), 'toolkits': toolkits.keys()}
 
     @wamp.register(u'liestudio.structure.remove_residues')
     def remove_residues(self, session=None, **kwargs):
@@ -121,7 +129,7 @@ class StructuresWampApi(LieApplicationSession):
         try:
             jsonschema.validate(config, BIOPYTHON_SCHEMA)
         except ValueError, e:
-            self.logger.error('Unvalid function arguments: {0}'.format(e))
+            self.log.error('Unvalid function arguments: {0}'.format(e))
             session['status'] = 'failed'
             return {'session': session}
 
@@ -361,6 +369,7 @@ class StructuresWampApi(LieApplicationSession):
             session['status'] = 'completed'
             return {'session': session, 'mol': output_file}
 
+        self.log.error('Unable to download structure: {0}'.format(pdb_id), **session)
         session['status'] = 'failed'
         return {'session': session}
 

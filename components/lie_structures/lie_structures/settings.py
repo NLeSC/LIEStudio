@@ -23,4 +23,5 @@ def _schema_to_data(schema, data=None, defdict=None):
 
 STRUCTURES_SCHEMA = os.path.join(os.path.dirname(__file__), 'structures_schema.json')
 BIOPYTHON_SCHEMA = os.path.join(os.path.dirname(__file__), 'biopython_schema.json')
+
 settings = _schema_to_data(json.load(open(STRUCTURES_SCHEMA)))

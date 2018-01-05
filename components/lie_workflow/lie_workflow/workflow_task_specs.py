@@ -106,7 +106,7 @@ class _TaskBase(object):
             if isinstance(value, str):
                 input_dict[key] = self._process_reference(value)
             elif isinstance(value, list):
-                input_dict[key] = [self._process_reference(v) for v in value]
+                input_dict[key] = [self._process_reference(v) if isinstance(v, str) else v for v in value]
             else:
                 input_dict[key] = value
 

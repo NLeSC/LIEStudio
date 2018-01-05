@@ -6,6 +6,8 @@ app/dist/
 data/logs/
 data/liedb/
 docs/html/
+bin/
+tmp/
 
 # This file is different per user
 data/settings.json

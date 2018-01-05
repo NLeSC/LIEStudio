@@ -1,59 +1,54 @@
 # -*- coding: utf-8 -*-
 
 """
-file: cheminfo_utils.py
+file: cheminfo_molhandle.py
 
-Cinfony driven cheminformatics utility functions
+Cinfony driven cheminformatics molecule read, write and manipulate functions
 """
 
 import os
-import importlib
 import logging
 
 from twisted.logger import Logger
 
-logging = Logger()
-packages = {'pybel': None, 'indy': None, 'rdk': None, 'cdk': None,
-            'webel': None, 'opsin': None, 'jchem': None}
+from . import toolkits
 
-for package in packages:
-    try:
-        packages[package] = importlib.import_module(
-            "lie_structures.cinfony.{0}".format(package))
-    except:
-        msg = 'Unable to import cheminformatics package {0} using cinfony'
-        logging.debug(msg.format(package))
+logging = Logger()
 
 
 def mol_read(
         mol, mol_format=None, from_file=False, toolkit='pybel',
-        fallback='webel', default_mol_name='ligand'):
+        default_mol_name='ligand'):
     """
     Import molecular structure file in cheminformatics toolkit molecular object
     """
 
-    toolkit_driver = packages.get(toolkit, fallback)
+    toolkit_driver = toolkits.get(toolkit)
+    if not toolkit_driver:
+        logging.error('Cheminformatics toolkit {0} not active'.format(toolkit))
+        return
 
-    # Get molecular file format from file extention if path
+    # Get molecular file format from file extension if path
     if not mol_format and from_file:
         mol_format = mol.split('.')[-1] or None
 
     # Is the file format supported by the toolkit
-    # if mol_format not in toolkit_driver.informats:
-    #     msg ='Molecular file format "{0}" not supported by {1}'
-    #     logging.error(msg.format(mol_format, toolkit))
+    if mol_format not in toolkit_driver.informats:
+        logging.error('Molecular file format "{0}" not supported by {1}'.format(mol_format, toolkit))
+        return
+    try:
+        if from_file:
+            molobject = toolkit_driver.readfile(mol_format, mol).next()
+        else:
+            molobject = toolkit_driver.readstring(mol_format, mol)
+    except IOError, e:
+        logging.error(e)
+        return
 
-    #     return None
-
-    molobject = None
-    if from_file:
-        assert os.path.isfile(mol), logging.error('No such file at path: {0}'.format(mol))
-        molobject = toolkit_driver.readfile(mol_format, mol).next()
-    else:
-        molobject = toolkit_driver.readstring(mol_format, mol)
-
-    # Set the molecular title to something meaningfull
-    if not molobject.title or not all([i.isalnum() for i in molobject.title]):
+    # Set the molecular title to something meaningful
+    if not getattr(molobject, 'title', None):
+        molobject.title = default_mol_name
+    if not all([i.isalnum() for i in molobject.title]):
         molobject.title = default_mol_name
 
     # Register import file format and toolkit in molobject
@@ -63,19 +58,23 @@ def mol_read(
     return molobject
 
 
-def mol_write(molobject, mol_format=None, file_path=None, fallback='webel'):
+def mol_write(molobject, mol_format=None, file_path=None):
 
-    toolkit_driver = packages.get(molobject.toolkit, fallback)
+    toolkit_driver = toolkits.get(molobject.toolkit)
+    if not toolkit_driver:
+        logging.error('Cheminformatics toolkit {0} not active'.format(molobject.toolkit))
+        return
 
     mol_format = mol_format or getattr(molobject, 'mol_format', None)
-    assert mol_format in toolkit_driver.informats, logging.error('Molecular file format "{0}" not supported by {1}'.format(mol_format, toolkit))
+    assert mol_format in toolkit_driver.outformats, logging.error('Molecular file format "{0}" not supported by {1}'.
+                                                                 format(mol_format, molobject.toolkit))
 
     output = molobject.write(mol_format, file_path, overwrite=True)
 
     if file_path and os.path.isfile(file_path):
         return file_path
 
-    return output
+    return output.strip()
 
 
 def mol_attributes(molobject):
@@ -121,7 +120,15 @@ def mol_make3D(molobject, forcefield='mmff94', localopt=True, steps=50):
     Convert 1D or 2D to a 3D representation.
 
     In case of the PyBel toolkit, hydrogens are first added.
+    Not available for the CDK and Webel toolkits.
     """
+
+    # RDKit has no 'dim' variable, add it
+    if molobject.toolkit in ('rdk', 'webel'):
+        try:
+            molobject.dim = len(molobject.atoms[0].coords)
+        except AttributeError:
+            molobject.dim = 0
 
     # If molobject has 3 dimensions, check if coordinates are 3D
     if molobject.dim == 3:
@@ -134,9 +141,9 @@ def mol_make3D(molobject, forcefield='mmff94', localopt=True, steps=50):
             logging.info('Molecule {0} already in 3D'.format(molobject.title))
             return molobject
 
-    if molobject.toolkit == 'cdk':
+    if molobject.toolkit in ('cdk', 'webel'):
         logging.error(
-            'Conversion to 3D coordinate set not supported by CDK toolkit')
+            'Conversion to 3D coordinate set not supported by {0} toolkit'.format(molobject.toolkit))
         return None
 
     molobject.make3D(forcefield=forcefield, steps=steps)
@@ -154,7 +161,8 @@ def mol_rotate(molobject, vector=[0, 0, 0, 0]):
     if molobject.toolkit != 'pybel':
         logging.error('Rotation only supported by OpenBabel Pybel object')
         return
-    toolkit_driver = packages.get(molobject.toolkit)
+
+    toolkit_driver = toolkits.get(molobject.toolkit)
     x, y, z, angle = vector
     matrix = toolkit_driver.ob.matrix3x3()
 
@@ -197,7 +205,7 @@ def mol_combine_rotations(molobject, rotations=[]):
         logging.debug("Rotating x,y,z,angle {0}".format(i))
 
     # Combine rotated structure into new file
-    toolkit_driver = packages.get(molobject.toolkit)
+    toolkit_driver = toolkits.get(molobject.toolkit)
     rotated_file = toolkit_driver.Outputfile(
         molobject.mol_format, "multipleSD.mol2")
     for rotated_mol in rotated_mols:

@@ -106,13 +106,13 @@ class DockingWampApi(LieApplicationSession):
         if success:
             session['status'] = 'completed'
             results = docking.results()
+            return {'session': session, 'output': results}
         else:
             # Docking run not successful, cleanup
             session['status'] = 'failed'
             self.logger.error('PLANTS docking not successful', **session)
             docking.delete()
-
-        return {'session': session, 'output': results}
+            return {'session': session}
 
 
 def make(config):

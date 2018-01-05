@@ -49,7 +49,8 @@
         },
         "solvent": {
             "type": "string",
-            "description": "Solvent model to use"
+            "description": "Solvent model to use",
+            "default": "tip3p"
         },
         "electrostatics": {
             "type": "string",
@@ -96,6 +97,10 @@
             "type": "number",
             "description": "Salt concentration in mol/l. By default, counterions will be added. If the concentration is set negative, then salt is added without compensating for overall charge of the system. Setting the concentration to -0 will disable addition of ions",
             "default": 0.1539976
+        },
+        "charge": {
+            "type": "number",
+            "description": "Charge to compensate (overrules charge of system)"
         },
         "gmxrc": {
             "type": "string",

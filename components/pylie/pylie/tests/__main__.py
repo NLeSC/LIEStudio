@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Python runner for lie_graph module unit tests, run as:
+Python runner for lie_pylie module unit tests, run as:
 ::
     python tests
 """
@@ -21,7 +21,7 @@ sys.path.insert(0, modulepath)
 
 def module_test_suite():
     """
-    Run lie_graph module unit tests
+    Run lie_pylie module unit tests
     """
     loader = unittest2.TestLoader()
 

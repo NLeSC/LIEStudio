@@ -88,12 +88,14 @@ class _Common(object):
                     if not func_name in self.plot_functions:
                         self.plot_functions[func_name] = getattr(plotting, func)
 
-    def get_columns(self, columns, flags=0):
+    def get_columns(self, columns, regex=False, flags=0):
         """
         Get columns with wildcard support.
 
         :param columns: column(s) to search for
         :type columns:  :py:str
+        :param regex:   regular expression match
+        :type regex:    :py:bool
         :param flags:   optional flags for the regular expression engine
         :return:        list of matching column names or empty list
         :rtype:         :py:list
@@ -104,7 +106,10 @@ class _Common(object):
 
         result = []
         for column in columns:
-            if '*' in column:
+            if regex:
+                pattern = re.compile(column, flags=flags)
+                result.extend([col for col in self.columns if pattern.match(col)])
+            elif '*' in column:
                 pattern = re.compile('^{0}'.format(column.replace('*', '.*')), flags=flags)
                 result.extend([col for col in self.columns if pattern.search(col)])
             elif column in self.columns:

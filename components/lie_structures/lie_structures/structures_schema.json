@@ -5,6 +5,16 @@
     "description": "Small molecule cheminformatics tools",
     "type": "object",
     "properties": {
+        "indy_path": {
+            "type": "string",
+            "description": "Path to Indigo installation",
+            "default": "/Users/mvdijk/Documents/WorkProjects/liestudio-master/liestudio/bin/indigo-python-1.3.0beta.r16-mac"
+        },
+        "rdk_path": {
+            "type": "string",
+            "description": "Path to RDKit installation",
+            "default": "/Users/mvdijk/Documents/WorkProjects/liestudio-master/liestudio/bin/RDkit"
+        },
         "mol": {
             "type": "string",
             "description": "Moleculare file"

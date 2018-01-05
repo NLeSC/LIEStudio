@@ -10,7 +10,6 @@ import os
 import json
 import jsonschema
 import tempfile
-import shutil
 
 from autobahn import wamp
 
@@ -44,6 +43,7 @@ class AmberWampApi(LieApplicationSession):
         tmpfile = os.path.join(workdir, 'input.mol2')
         if not os.path.isdir(workdir):
             os.mkdir(workdir)
+
         with open(tmpfile, 'w') as inp:
             inp.write(structure)
 
@@ -51,6 +51,7 @@ class AmberWampApi(LieApplicationSession):
         output = amber_acpype(tmpfile, workdir=workdir, **acpype_config)
         if not output:
             session['status'] = 'failed'
+            output = {}
         else:
             session['status'] = 'completed'
 
@@ -72,6 +73,7 @@ class AmberWampApi(LieApplicationSession):
         tmpfile = os.path.join(workdir, 'input.mol2')
         if not os.path.isdir(workdir):
             os.mkdir(workdir)
+
         with open(tmpfile, 'w') as inp:
             inp.write(structure)
 

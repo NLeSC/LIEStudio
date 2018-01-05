@@ -29,7 +29,7 @@ def amber_acpype(mol, workdir=None, **kwargs):
     - Sousa da Silva AW, Vranken WF. ACPYPE - AnteChamber PYthon
       Parser interfacE. (2012), BMC Res Notes. 2012 Jul 23;5:367.
       doi: 10.1186/1756-0500-5-367.
-    """    
+    """
     # ACPYPE executable
     acepype_exe = 'acpype.py'
 
@@ -81,7 +81,6 @@ def amber_acpype(mol, workdir=None, **kwargs):
         return output_path
     else:
         logging.error('Acpype failed')
-
 
 
 def amber_reduce(
@@ -144,21 +143,26 @@ def amber_reduce(
     flags = set_bool_flags(options)
 
     # Process keyword argument flags
-    flags.extend(['-{0}{1}'.format(option, flag) for option,flag in options.items() if 
-        type(flag) not in (bool,type(None))])
-    
+    flags.extend(
+        ['-{0}{1}'.format(option, flag) for option, flag in
+         options.items() if type(flag) not in (bool, type(None))])
+
     logging.info("Running Amber 'reduce' with command line arguments: {0}".format(','.join(flags)))
-    not_supported = ['-{0}'.format(n) for n in kwargs if not n.lower() in SETTINGS['amber_reduce']]
+    not_supported = ['-{0}'.format(n) for n in kwargs if not n.lower()
+                     in SETTINGS['amber_reduce']]
     if not_supported:
         logging.warn("Following command line arguments not supported by Amber 'reduce': {0}".format(','.join(not_supported)))
-    
+
     cmd = [reduce_exe_path] + flags
     cmd.extend([mol, '>', output])
-    
-    # Run the CLI command    
-    clirunner = CLIRunner()
-    clirunner.run(cmd)
-    
+
+    # Run the command
+    p = Popen(' '.join(cmd), stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True)
+    cmd_out, cmd_err = p.communicate()
+    logging.info("OUTPUT AMBER REDUCE:\n{}".format(cmd_out))
+    if cmd_err:
+        logging.error("Error AMBER REDUCE:\n{}".format(cmd_err))
+
     # Return output file
     if os.path.exists(output):
         if return_output_path:

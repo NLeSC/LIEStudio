@@ -102,10 +102,14 @@ class PlantsDocking(DockingBase):
         self.logging.info("STRUCTURES: ".format(structures))
         xyz = coords_from_mol2(structures)
         c = ClusterStructures(xyz, labels=results.keys())
-        clusters = c.cluster(4, min_cluster_count=2)
+        clusters = c.cluster(self._config.get('min_rmsd_tolerance', 4.0),
+                             min_cluster_count=self._config.get('min_cluster_size', 2))
 
         for structure, res in clusters.items():
             results[structure].update(res)
+
+        # Plot cluster results
+        c.plot(to_file=os.path.join(self._workdir, 'cluster_dendrogram.pdf'))
 
         return results
 

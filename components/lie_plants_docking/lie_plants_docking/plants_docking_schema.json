@@ -211,7 +211,7 @@
         },
         "bindingsite_radius": {
             "description": "",
-            "type": "integer",
+            "type": "number",
             "default": 12
         },
         "cluster_structures": {
@@ -268,7 +268,18 @@
             "description": "",
             "type": "integer",
             "default": 0
+        },
+        "min_cluster_size": {
+            "description": "Minimum cluster size for coordinate based clustering",
+            "type": "integer",
+            "default": 2
+        },
+        "min_rmsd_tolerance": {
+            "description": "Minimum RMSD threshold for defining clusters",
+            "type": "number",
+            "default": 4
         }
+
     },
     "required": ["bindingsite_center", "ligand_file", "protein_file"]
 }

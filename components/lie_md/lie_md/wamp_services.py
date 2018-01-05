@@ -6,9 +6,19 @@ file: wamp_services.py
 WAMP service methods the module exposes.
 """
 
+<<<<<<< HEAD
 from autobahn.wamp.types import RegisterOptions
 from cerise_interface import (
     call_cerise_gromit, create_cerise_config)
+=======
+import os
+import tempfile
+import shutil
+import json
+
+from autobahn import wamp
+
+>>>>>>> master
 from lie_system import LieApplicationSession, WAMPTaskMetaData
 from lie_md.settings import SETTINGS
 from md_config import set_gromacs_input
@@ -48,6 +58,7 @@ class MDWampApi(LieApplicationSession):
             options=RegisterOptions(invoke=u'roundrobin'))
 
     def run_gromacs_liemd(
+<<<<<<< HEAD
             self, session={}, path_cerise_config=None, cwl_workflow=None,
             protein_pdb=None, protein_top=None, ligand_pdb=None,
             ligand_top=None, include=[], residues=None, **kwargs):
@@ -70,6 +81,10 @@ class MDWampApi(LieApplicationSession):
         """
         logger.info("starting liemd task_id:{}".format(session['task_id']))
         workdir = kwargs.get('workdir', os.getcwd())
+=======
+            self, session=None, protein_file=None, ligand_file=None,
+            topology_file=None, **kwargs):
+>>>>>>> master
 
         # Retrieve the WAMP session information
         session = WAMPTaskMetaData(metadata=session).dict()
@@ -87,9 +102,81 @@ class MDWampApi(LieApplicationSession):
         cerise_config = create_cerise_config(
             path_cerise_config, session, cwl_workflow)
 
+<<<<<<< HEAD
         # Run the MD and retrieve the energies
         output = call_cerise_gromit(
             gromacs_config, cerise_config, self.db['cerise'])
+=======
+        # Load GROMACS configuration and update
+        gromacs_config = self.package_config.dict()
+
+        # Create workdir and save file
+        workdir = os.path.join(kwargs.get('workdir', tempfile.gettempdir()))
+        if not os.path.isdir(workdir):
+            os.mkdir(workdir)
+        os.chdir(workdir)
+
+        # Store protein file if available
+        if protein_file:
+            protdsc = os.path.join(workdir, 'protein.pdb')
+            try:
+                if os.path.isfile(protein_file):
+                    shutil.copy(protein_file, protdsc)
+            except:
+                with open(protdsc, 'w') as inp:
+                    inp.write(protein_file)
+
+        # Store ligand file if available
+        if ligand_file:
+            ligdsc = os.path.join(workdir, 'ligand.pdb')
+            try:
+                if os.path.isfile(ligand_file):
+                    shutil.copy(ligand_file, ligdsc)
+            except:
+                with open(ligdsc, 'w') as inp:
+                    inp.write(ligand_file)
+
+        # Save ligand topology files
+        if topology_file:
+            topdsc = os.path.join(workdir, 'ligtop.itp')
+            try:
+                if os.path.isfile(topology_file):
+                    shutil.copy(topology_file, topdsc)
+            except:        
+                with open(topdsc, 'w') as inp:
+                    inp.write(topology_file)
+
+        # Copy script files to the working directory
+        for script in ('getEnergies.py', 'gmx45md.sh'):
+            src = os.path.join(__rootpath__, 'scripts/{0}'.format(script))
+            dst = os.path.join(workdir, script)
+            shutil.copy(src, dst)
+
+        # Fix topology ligand
+        itpOut = 'ligand.itp'
+        #results = correctItp(topdsc, itpOut, posre=True)
+        results = {'charge': 0, 'itp': itpOut}
+
+        # Prepaire simulation
+        gromacs_config['charge'] = results['charge']
+        gmxRun = gromit_cmd(gromacs_config)
+
+        if protein_file:
+            gmxRun += '-f {0} '.format(os.path.basename(protdsc))
+
+        if ligand_file:
+            gmxRun += '-l {0},{1} '.format(
+                os.path.basename(ligdsc), os.path.basename(results['itp']))
+
+        # Prepaire post analysis (energy extraction)
+        GMXRC = 'mock_path_to_gmxrc'
+        eneRun = 'python getEnergies.py -gmxrc {0} -ene -o ligand.ene'.format(GMXRC)
+
+        # write executable
+        with open('run_md.sh', 'w') as outFile:
+            outFile.write("{0}\n".format(gmxRun))
+            outFile.write("{0}\n".format(eneRun))
+>>>>>>> master
 
         session['status'] = 'completed'
 
