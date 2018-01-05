@@ -21,7 +21,7 @@ from Bio.PDB.PDBParser import PDBParser
 from lie_system import LieApplicationSession, WAMPTaskMetaData
 from lie_structures import settings, toolkits
 from lie_structures.settings import _schema_to_data, STRUCTURES_SCHEMA, BIOPYTHON_SCHEMA
-from lie_structures.cheminfo_wamp.cheminfo_descriptors_wamp import Chemi nfoDescriptorsWampApi
+from lie_structures.cheminfo_wamp.cheminfo_descriptors_wamp import CheminfoDescriptorsWampApi
 from lie_structures.cheminfo_wamp.cheminfo_molhandle_wamp import CheminfoMolhandleWampApi
 from lie_structures.cheminfo_wamp.cheminfo_fingerprints_wamp import CheminfoFingerprintsWampApi
 
