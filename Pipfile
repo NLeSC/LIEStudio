@@ -3,6 +3,7 @@ url = "https://pypi.python.org/simple"
 verify_ssl = true
 
 [packages]
+idna = "=2.5"
 crossbar = ">=16.10.1"
 pymongo = ">=3.3.0"
 pytz = ">=2016.6.1"
