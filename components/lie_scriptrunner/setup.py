@@ -37,7 +37,7 @@ setup(
     description='LIEStudio component able to run various scripts',
     author='Marc van Dijk, VU University, Amsterdam, The Netherlands',
     author_email='m4.van.dijk@vu.nl',
-    url='https://github.com/NLeSC/LIEStudio',
+    url='https://github.com/MD-Studio/MDStudio',
     license='Apache Software License 2.0',
     keywords='LIEStudio scripts execution',
     platforms=['Any'],

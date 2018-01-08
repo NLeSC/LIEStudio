@@ -24,7 +24,7 @@
 from setuptools import setup, find_packages
 
 distribution_name = 'lie_graph'
-test_requirements = ['unittest2', 'asq']
+test_requirements = ['unittest2']
 
 setup(
     name=distribution_name,
@@ -32,7 +32,7 @@ setup(
     description='Graph based data handling for the LIEStudio application',
     author='Marc van Dijk, VU University, Amsterdam, The Netherlands',
     author_email='m4.van.dijk@vu.nl',
-    url='https://github.com/NLeSC/LIEStudio',
+    url='https://github.com/MD-Studio/MDStudio',
     license='Apache Software License 2.0',
     keywords='LIEStudio graph data ORM',
     platforms=['Any'],

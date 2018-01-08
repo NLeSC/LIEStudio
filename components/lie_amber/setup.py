@@ -31,7 +31,7 @@ setup(
     description='LIEStudio component provinding an interface to the Amber Tools software suite',
     author='Marc van Dijk, VU University, Amsterdam, The Netherlands',
     author_email='m4.van.dijk@vu.nl',
-    url='https://github.com/NLeSC/LIEStudio',
+    url='https://github.com/MD-Studio/MDStudio',
     license='Apache Software License 2.0',
     keywords='LIEStudio AmberTools Amber',
     platforms=['Any'],
@@ -39,7 +39,7 @@ setup(
     package_data={'': ['*.json']},
     py_modules=[distribution_name],
     include_package_data=True,
-    install_requires=['executor', 'jsonschema'],
+    install_requires=['jsonschema'],
     zip_safe=True,
     entry_points={
         'autobahn.twisted.wamplet': [
@@ -55,6 +55,6 @@ setup(
         'Intended Audience :: Science/Research',
         ],
     scripts=[
-        'lie_amber/acpype.py'
+        'acpype.py'
     ]
 )

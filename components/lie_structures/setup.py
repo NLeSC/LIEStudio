@@ -32,14 +32,15 @@ setup(
     description='LIEStudio structure database module',
     author='Marc van Dijk, VU University, Amsterdam, The Netherlands',
     author_email='m4.van.dijk@vu.nl',
-    url='https://github.com/NLeSC/LIEStudio',
+    url='https://github.com/MD-Studio/MDStudio',
     license='Apache Software License 2.0',
     keywords='LIEStudio structures database',
     platforms=['Any'],
     packages=find_packages(),
     package_data={'': ['*.json']},
     py_modules=[distribution_name],
-    install_requires=['cinfony', 'openbabel', 'jsonschema', 'pydpi', 'JPype1', 'Pillow'] + test_requirements,
+    install_requires=['cinfony', 'openbabel', 'jsonschema', 'pydpi', 'JPype1', 'Pillow',
+                      'biopython'] + test_requirements,
     dependency_links=[
         "git+https://github.com/cinfony/cinfony.git@master#egg=cinfony-1.2"
     ],
