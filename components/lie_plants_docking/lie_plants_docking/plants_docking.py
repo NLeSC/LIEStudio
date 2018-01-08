@@ -99,7 +99,6 @@ class PlantsDocking(DockingBase):
 
         # Run a clustering
         structures = [mol2.get('path') for mol2 in results.values()]
-        self.logging.info("STRUCTURES: ".format(structures))
         xyz = coords_from_mol2(structures)
         c = ClusterStructures(xyz, labels=results.keys())
         clusters = c.cluster(self._config.get('min_rmsd_tolerance', 4.0),
@@ -202,9 +201,12 @@ class PlantsDocking(DockingBase):
                 protein_file.write(protein)
                 self._config['protein_file'] = 'protein.mol2'
 
-        with open(os.path.join(self._workdir, 'ligand.mol2'), 'w') as ligand_file:
-            ligand_file.write(ligand)
-            self._config['ligand_file'] = 'ligand.mol2'
+        if os.path.isfile(ligand):
+            self._config['ligand_file'] = ligand
+        else:
+            with open(os.path.join(self._workdir, 'ligand.mol2'), 'w') as ligand_file:
+                ligand_file.write(ligand)
+                self._config['ligand_file'] = 'ligand.mol2'
 
         # Write PLANTS configuration file
         conf_file = os.path.join(self._workdir, 'plants.config')

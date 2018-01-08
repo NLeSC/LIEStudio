@@ -10,6 +10,7 @@ import os
 import json
 import jsonschema
 import tempfile
+import shutil
 
 from autobahn import wamp
 
@@ -28,7 +29,8 @@ class AmberWampApi(LieApplicationSession):
     require_config = ['system']
 
     @wamp.register(u'liestudio.amber.acpype')
-    def run_amber_acpype(self, structure=None, session={}, **kwargs):
+    def run_amber_acpype(self, structure=None, session=None, from_file=False, **kwargs):
+
         # Retrieve the WAMP session information
         session = WAMPTaskMetaData(metadata=session).dict()
 
@@ -44,8 +46,11 @@ class AmberWampApi(LieApplicationSession):
         if not os.path.isdir(workdir):
             os.mkdir(workdir)
 
-        with open(tmpfile, 'w') as inp:
-            inp.write(structure)
+        if from_file and os.path.exists(structure):
+            shutil.copy(structure, tmpfile)
+        else:
+            with open(tmpfile, 'w') as inp:
+                inp.write(structure)
 
         # Run ACPYPE
         output = amber_acpype(tmpfile, workdir=workdir, **acpype_config)
@@ -55,10 +60,11 @@ class AmberWampApi(LieApplicationSession):
         else:
             session['status'] = 'completed'
 
-        return {'session': session, 'path': output}
+        output['session'] = session
+        return output
 
     @wamp.register(u'liestudio.amber.reduce')
-    def run_amber_reduce(self, structure=None, session={}, **kwargs):
+    def run_amber_reduce(self, structure=None, session=None, from_file=False, **kwargs):
         # Retrieve the WAMP session information
         session = WAMPTaskMetaData(metadata=session).dict()
 
@@ -74,8 +80,11 @@ class AmberWampApi(LieApplicationSession):
         if not os.path.isdir(workdir):
             os.mkdir(workdir)
 
-        with open(tmpfile, 'w') as inp:
-            inp.write(structure)
+        if from_file and os.path.exists(structure):
+            tmpfile = structure
+        else:
+            with open(tmpfile, 'w') as inp:
+                inp.write(structure)
 
         # Run ACPYPE
         output = amber_reduce(tmpfile, **amber_reduce_config)

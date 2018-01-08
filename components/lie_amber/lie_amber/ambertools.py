@@ -2,12 +2,25 @@
 
 import os
 import copy
+import glob
 
 from .settings import SETTINGS
 from subprocess import (PIPE, Popen)
 from twisted.logger import Logger
 
 logging = Logger()
+
+
+def _collect_acpype_output(path):
+
+    outfiles = {}
+    compound_name = os.path.basename(path).rstrip('.acpype')
+    for outfile in glob.glob('{0}/{1}_*.*'.format(path, compound_name)):
+        fname = os.path.basename(outfile).lstrip('{0}_'.format(compound_name))
+        varname = '_'.join([n.lower() for n in fname.split('.')])
+        outfiles[varname] = outfile
+
+    return outfiles
 
 
 def set_bool_flags(options):
@@ -78,13 +91,14 @@ def amber_acpype(mol, workdir=None, **kwargs):
 
     output_path = os.path.join(workdir, '{0}.acpype'.format(workdir_name))
     if os.path.isdir(output_path):
-        return output_path
+        outfiles = _collect_acpype_output(output_path)
+        outfiles['path'] = output_path
+        return outfiles
     else:
         logging.error('Acpype failed')
 
 
-def amber_reduce(
-        mol, output=None, return_output_path=False, exe='reduce', **kwargs):
+def amber_reduce(mol, output=None, return_output_path=False, exe='reduce', **kwargs):
     """
     Run AmberTools "reduce" program for adding hydrogens to molecular
     structures.
@@ -135,9 +149,7 @@ def amber_reduce(
 
     # Construct CLI arguments
     options = copy.deepcopy(SETTINGS['amber_reduce'])
-    options.update(
-        {k.lower().strip('-'): v for k, v in kwargs.items()}
-    )
+    options.update({k.lower().strip('-'): v for k, v in kwargs.items()})
 
     # Process boolean flags
     flags = set_bool_flags(options)
