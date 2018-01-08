@@ -1,11 +1,20 @@
 # -*- coding: utf-8 -*-
 
+import os
 import numpy
 import itertools
+import matplotlib
 
 from twisted.logger import Logger
 from scipy.spatial.distance import squareform
 from scipy.cluster.hierarchy import linkage, fcluster, dendrogram
+
+# Init maplotlib
+from matplotlib import style
+matplotlib.use('Agg')  # Use Agg for non-interactive plotting
+style.use('ggplot')  # Because of AttributeError: Unknown property color_cycle bug in Pandas 1.7.1 with Matplotlib 1.5.0
+
+import matplotlib.pyplot as plt
 
 
 def coords_from_mol2(mol2_files):
@@ -83,7 +92,7 @@ def _kabsch(P, Q):
     # Computation of the covariance matrix
     C = numpy.dot(numpy.transpose(P), Q)
 
-     # Computation of the optimal rotation matrix
+    # Computation of the optimal rotation matrix
     # This can be done using singular value decomposition (SVD)
     # Getting the sign of the det(V)*(W) to decide
     # whether we need to correct our rotation matrix to ensure a
@@ -168,12 +177,10 @@ class ClusterStructures(object):
         self.labels = labels or range(len(labels))
 
         # All xyz coordinate sets need to be of type numpy.ndarray
-        print("XYZ: ", self.xyz)
         cond = all([isinstance(coords, numpy.ndarray) for coords in self.xyz])
         assert cond, 'Structure coordinates need to be of type numpy.ndarray'
 
         # Equality in number and order of atoms for all coordinate sets is assumed
-        print("Coordinates: ", self.xyz)
         cond = len(set([coords.size for coords in self.xyz])) == 1
         assert cond, 'Structure coordinates have an unequal number of atoms'
 
@@ -297,8 +304,7 @@ class ClusterStructures(object):
 
         fig.savefig(to_file)
 
-    def cluster(
-            self, t=5, method='single', criterion='distance', min_cluster_count=1):
+    def cluster(self, t=5, method='single', criterion='distance', min_cluster_count=1):
         """
         Cluster the structures using hierarchical clustering methods on
         the calculated pairwise distance matrix.

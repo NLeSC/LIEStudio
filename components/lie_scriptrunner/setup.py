@@ -22,14 +22,7 @@
 
 from setuptools import setup, find_packages
 
-
-def readme():
-    with open('README.rst') as f:
-        return f.read()
-
-
 distribution_name = 'lie_scriptrunner'
-
 
 setup(
     name=distribution_name,

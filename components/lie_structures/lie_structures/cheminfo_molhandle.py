@@ -36,6 +36,7 @@ def mol_read(
     if mol_format not in toolkit_driver.informats:
         logging.error('Molecular file format "{0}" not supported by {1}'.format(mol_format, toolkit))
         return
+
     try:
         if from_file:
             molobject = toolkit_driver.readfile(mol_format, mol).next()
