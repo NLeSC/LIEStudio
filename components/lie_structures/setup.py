@@ -39,7 +39,8 @@ setup(
     packages=find_packages(),
     package_data={'': ['*.json']},
     py_modules=[distribution_name],
-    install_requires=['cinfony', 'openbabel', 'jsonschema', 'pydpi', 'JPype1', 'Pillow'] + test_requirements,
+    install_requires=['biopython', 'cinfony', 'openbabel', 'jsonschema',
+                      'pydpi', 'JPype1', 'Pillow'] + test_requirements,
     dependency_links=[
         "git+https://github.com/cinfony/cinfony.git@master#egg=cinfony-1.2"
     ],
