@@ -13,18 +13,31 @@ It also contains 2 standalone instances that is not part of the cluster. They ar
 
 This image requires at least `Docker` version 1.10 but the latest version is recommended.
 
+Update 2018-03-06: All images/tags on dockerhub has been rebuilt with the latest code and re-uploaded to dockerhub.
 
 
 # Available tags
 
 The following tags with pre-built images is available on `docker-hub`.
 
-- latest == 3.2.9
+- latest == 4.0.8
 
-For redis 4.0 versions please see the branch 'redis-4.0'
+Redis 4.0.x versions:
+
+- 4.0.8
+- 4.0.7
+- 4.0.6
+- 4.0.5
+- 4.0.4
+- 4.0.3
+- 4.0.2
+- 4.0.1
+- 4.0.0
 
 Redis 3.2.x versions:
 
+- 3.2.11
+- 3.2.10
 - 3.2.9
 - 3.2.8
 - 3.2.7
@@ -35,7 +48,6 @@ Redis 3.2.x versions:
 - 3.2.2
 - 3.2.1
 - 3.2.0
-- 3.2-rc1
 
 Redis 3.0.x versions:
 
@@ -52,7 +64,7 @@ Redis 3.0.x versions:
 
 # Usage
 
-There is 2 primary ways of buliding and running this container
+There is 2 primary ways of building and running this container
 
 
 ## docker build
@@ -109,6 +121,28 @@ To start the container run:
 To connection to your cluster you can run redis-cli tool:
 
     redis-cli -c -p 7000
+
+
+## Omit standalone redis instances
+
+Set env variable CLUSTER_ONLY=true.
+
+* Running with docker compose, modify docker-compose file
+
+      version: '2'
+      services:
+        redis-cluster:
+          build:
+            context: .
+            args:
+              redis_version: '3.2.7'
+          hostname: server
+        environment:
+          CLUSTER_ONLY: 'true'
+
+* Running with docker directly:
+
+      docker run -i -t -p 7000:7000 -p 7001:7001 -p 7002:7002 -p 7003:7003 -p 7004:7004 -p 7005:7005 -e CLUSTER_ONLY=true <image name/id>
 
 
 ## Build alternative redis versions
