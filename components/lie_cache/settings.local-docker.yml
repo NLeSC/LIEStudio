@@ -1,6 +1,6 @@
 settings:
   nodes:
     - host: localhost
-      port: 7000
+      port: 7010
     - host: localhost
-      port: 7001
+      port: 7011

@@ -43,10 +43,7 @@ services:
 
 
     redis:
-        build:
-            context: docker/redis-cluster
-            args:
-                redis_version: 3.0.7
+        image: grokzen/redis-cluster
         ports:
             - "7000:7000"
             - "7001:7001"
@@ -55,6 +52,17 @@ services:
         healthcheck:
           test: ["CMD", "nc", "-zv", "localhost", "7000-7001"]
           timeout: 10s
+
+    redis-local:
+        build:
+            context: docker/docker-redis-cluster
+            args:
+                redis_version: '3.2.9'
+        ports:
+            - "7010:7010"
+            - "7011:7011"
+        volumes:
+            - redis:/data/db
 
 volumes:
     mongo:

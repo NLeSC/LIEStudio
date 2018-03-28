@@ -2,6 +2,7 @@ from typing import Optional, Any, List, Union, Tuple
 
 from mdstudio.cache import CacheType
 from mdstudio.cache.cache import ICache
+# from mdstudio.api.context import ContextManager
 import mdstudio
 
 class SessionCacheWrapper(ICache):
@@ -77,4 +78,3 @@ class SessionCacheWrapper(ICache):
 
     def _call(self, uri, request):
         return self.session.call('mdstudio.cache.endpoint.{}'.format(uri), request, claims=mdstudio.api.context.ContextManager.get('call_context').get_cache_claims(self.cache_type))
-
