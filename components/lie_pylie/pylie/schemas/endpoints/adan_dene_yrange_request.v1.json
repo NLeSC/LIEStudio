@@ -1,0 +1,22 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://mdstudio/schemas/adan_dene_yrange_request.json",
+    "title": "Adan dene yrange input",
+    "description": "eTOX ALLIES deltaG range applicability domain test",
+     "type": "object",
+    "properties": {
+	"dataframe":{
+	    "type": "string",
+	    "default": "energy decomposition dataframe"
+	},
+	"ymin": {
+	    "type": "number",
+	    "description": "lower value for deltaG range"
+	},
+	"workdir": {
+	    "type": "string",
+	    "default": "."
+	}
+    },
+    "required": ["dataframe", "ymin", "ymax"]
+}

@@ -1,0 +1,18 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema",
+    "title": "docking output",
+    "description": "docking output",
+    "type": "object",
+    "properties": {
+	"status": {
+	    "type": "string",
+	    "description": "Plants Docking final status",
+	    "enum": ["failed", "completed"]
+	},
+	"output": {
+	    "type": "object",
+	    "description": "Dictionary containing the Plants docking output files"
+	}
+    },
+    "required": ["status", "output"]
+}

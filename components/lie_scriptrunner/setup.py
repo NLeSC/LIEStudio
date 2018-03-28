@@ -6,7 +6,7 @@
 #
 # A LIEStudio component able to run various scripts
 #
-# Copyright © 2016 Marc van Dijk, VU University Amsterdam, the Netherlands
+# Copyright © 2017 Marc van Dijk, VU University Amsterdam, the Netherlands
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ setup(
     description='LIEStudio component able to run various scripts',
     author='Marc van Dijk, VU University, Amsterdam, The Netherlands',
     author_email='m4.van.dijk@vu.nl',
-    url='https://github.com/NLeSC/LIEStudio',
+    url='https://github.com/MD-Studio/MDStudio',
     license='Apache Software License 2.0',
     keywords='LIEStudio scripts execution',
     platforms=['Any'],
@@ -51,4 +51,8 @@ setup(
         'Operating System :: OS Independent',
         'Intended Audience :: Science/Research',
         ],
+    install_requires=[],
+    extras_require={
+        'test': ['nose', 'coverage', 'nbsphinx'],
+    }
 )

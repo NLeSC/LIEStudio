@@ -25,11 +25,17 @@ __licence__ = 'Apache Software License 2.0'
 __url__ = 'https://github.com/NLeSC/LIEStudio'
 __copyright__ = "Copyright (c) VU University, Amsterdam"
 __rootpath__ = os.path.dirname(__file__)
-__all__ = ['ATBServerApi', 'ATB_Mol', 'wampapi']
 
-from .wamp_services import ATBWampApi, ATBServerApi, ATB_Mol
+__all__ = ['ATBServerApi', 'ATB_Mol']
+
 from .settings import SETTINGS
+
+if sys.version_info.major == 3:
+    from .atb_api_py3 import ATB_Mol
+    from .atb_api_py3 import API as ATBServerApi
+else:
+    from .atb_api_py2 import ATB_Mol
+    from .atb_api_py2 import API as ATBServerApi
 
 # Define module public API
 settings = SETTINGS
-wampapi = ATBWampApi

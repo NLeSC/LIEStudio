@@ -1,0 +1,24 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://mdstudio/schemas/structures_schema.json",
+    "title": "Download PDB input",
+    "description": "Download a structure file from the RCSB database using a PDB ID",
+    "type": "object",
+    "properties": {
+        "pdb_id": {
+            "type": "string",
+            "description": "RCSB PDB ID"
+        },
+        "rcsb_file_format": {
+            "type": "string",
+            "description": "RCSB structure file format",
+            "default": "pdb",
+            "enum": ["pdb", "xml", "mmCif", "mmtf", "bundle"]
+        },
+	"workdir": {
+	    "type": "string",
+	    "default": "."
+	}
+    },
+    "required": ["pdb_id"]
+} 

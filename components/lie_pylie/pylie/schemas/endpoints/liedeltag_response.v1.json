@@ -1,0 +1,25 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://liestudio/schemas/delta_tag_output.json",
+    "title": "Deltatag output",
+    "description": "Deltatag",
+    "type": "object",
+    "properties": {
+	"status": {
+	    "type": "string",
+	    "description": "Job final status",
+	    "enum": ["failed", "completed"]
+	},
+	"liedeltag_file": {
+	    "type": "string",
+	    "description": "Path to the deltadag file",
+	    "default": ""
+	},
+	"liedeltag": {
+	    "type": ["object", "null"],
+	    "description": "",
+	    "default": ""
+	} 
+   },
+    "required": ["status", "liedeltadag_file", "liedeltag"]
+}

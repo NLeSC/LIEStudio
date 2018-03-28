@@ -4,9 +4,55 @@
 file: graph_math_operations.py
 
 Functions for performing 'set' like math operations on graphs.
+
+# TODO: add graph_intersection, graph_difference and graph_symmetric_difference methods
 """
 
-from .graph_helpers import _edge_list_to_adjacency
+from lie_graph.graph_helpers import edge_list_to_adjacency, GraphException
+
+
+def graph_join(graph1, graph2, links=None):
+    """
+    Add graph2 as subgraph to graph1
+
+    All nodes and edges of graph 2 are added to graph 1. Final links between
+    nodes in graph 1 and newly added nodes of graph 2 are defined by the edges
+    in the `links` list.
+
+    :param graph1: graph to add to
+    :type graph1:  GraphAxis
+    :param graph2: graph added
+    :type graph2:  GraphAxis
+    :param links:  links between nodes in graph1 and graph2
+    :type links:   :py:list
+
+    :return:       graph1
+    """
+
+    # Check if graph 1 link nodes exist
+    if links:
+        for link in links:
+            assert link[0] in graph1.nodes, GraphException('Link node {0} not in graph1'.format(link[0]))
+            assert link[1] in graph2.nodes, GraphException('Link node {0} not in graph1'.format(link[1]))
+
+    # Add all nodes and attributes of graph 2 to 1 and register node mapping
+    mapping = {}
+    for nid, attr in graph2.nodes.items():
+        newnid = graph1.add_node(**attr)
+        mapping[nid] = newnid
+
+    # Transfer edges and attributes from graph 2 to graph 1 and map node IDs
+    for eid, attr in graph2.edges.items():
+        if eid[0] in mapping and eid[1] in mapping:
+            neweid = (mapping[eid[0]], mapping[eid[1]])
+            graph1.add_edge(neweid, directed=True, **attr)
+
+    # Link graph 2 nodes to graph 1
+    if links:
+        for link in links:
+            graph1.add_edge(link[0], mapping[link[1]], directed=graph1.is_directed)
+
+    return graph1
 
 
 def graph_add(graph1, graph2):
@@ -35,12 +81,12 @@ def graph_add(graph1, graph2):
 
     for edge in graph2.edges():
         if edge not in graph1.edges:
-            graph1.add_edge(edge, directed=False)
+            graph1.add_edge(edge)
 
     graph1.auto_nid = auto_nid
 
     # Rebuild graph adjacency list
-    adjacency = _edge_list_to_adjacency(graph1.edges.keys())
+    adjacency = edge_list_to_adjacency(graph1.edges.keys())
     graph1.adjacency.update(adjacency)
 
     return graph1
@@ -76,25 +122,10 @@ def graph_union(graph1, graph2):
     graph1.auto_nid = auto_nid
 
     # Rebuild graph adjacency list
-    adjacency = _edge_list_to_adjacency(graph1.edges.keys())
+    adjacency = edge_list_to_adjacency(graph1.edges.keys())
     graph1.adjacency.update(adjacency)
 
     return graph1
-
-
-def graph_intersection(graph):
-
-    pass
-
-
-def graph_difference(graph):
-
-    pass
-
-
-def graph_symmetric_difference(graph):
-
-    pass
 
 
 def graph_update(graph1, graph2, update_edges=True, update_nodes=True):

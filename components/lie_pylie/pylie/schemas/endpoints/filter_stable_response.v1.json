@@ -1,0 +1,20 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://mdstudio/schemas/filter_stable_response.json",
+    "title": "Filter stable output",
+    "description": "Use FFT and spline-based filtering to detect and extract stable regions",
+    "type": "object",
+    "properties": {
+	"status": {
+	    "type": "string",
+	    "description": "Job final status",
+	    "enum": ["failed", "completed"]
+	},
+	"output": {
+	    "type":["null", "object"],
+	    "description": "Dataframe and stable posicion files"
+	}
+    },
+    "required": ["status", "output"]
+}
+

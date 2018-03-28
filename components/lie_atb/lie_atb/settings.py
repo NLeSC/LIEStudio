@@ -15,7 +15,7 @@ SETTINGS = {
 }
 
 ALLOWED_QUERY_KEYS = ['iupac', 'inchi', 'inchi_key', 'common_name', 'formula', 'rnme',
-                      'maximum_qm_level', 'curation_trust', 'is_finished',
+                      'maximum_qm_level', 'curation_trust', 'is_finished', 'molid',
                       'user_label', 'tag', 'any', 'match_partial', 'moltype',
                       'max_atoms', 'min_atoms', 'has_pdb_hetId', 'smiles']
 

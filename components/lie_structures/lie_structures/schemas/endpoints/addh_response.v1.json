@@ -1,0 +1,19 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://liestudio/schemas/addh_response.json",
+    "title": "Add hydrogens output",
+    "description": "Add hydrogens to molecule",
+    "type": "object",
+    "properties": {	
+	"status": {
+	    "type": "string",
+	    "description": "Job final status",
+	    "enum": ["failed", "completed"]
+	},
+	"mol": {
+	    "type": ["string", "null"],
+	    "description": "Resulting molecule"
+	}
+    },
+    "required": ["mol", "status"]
+}

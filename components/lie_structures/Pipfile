@@ -1,0 +1,18 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+mdstudio = {path = "../../mdstudio/", editable = true}
+local = {path = "./", editable = true}
+biopython = "*"
+cinfony = "*"
+JPype1 = "*"
+openbabel = "*"
+Pillow = "*"
+pydpi = "*"
+retrying = "*"
+
+[dev-packages]
+unittest2 = "*"

@@ -27,7 +27,7 @@ def module_test_suite():
 
     print('Running lie_graph unittests')
     testpath = os.path.join(os.path.dirname(__file__), 'module')
-    suite = loader.discover(testpath, pattern='graph_*.py')
+    suite = loader.discover(testpath, pattern='module_*.py')
     runner = unittest2.TextTestRunner(verbosity=2)
     runner.run(suite)
 

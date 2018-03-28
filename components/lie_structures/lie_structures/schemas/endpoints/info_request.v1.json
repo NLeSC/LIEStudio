@@ -1,0 +1,36 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://mdstudio/schemas/structures_schema.json",
+    "title": "Convert molecule input",
+    "description": "Convert molecule representation",
+    "type": "object",
+    "properties": {
+	"from_file": {
+	    "type": "boolean",
+	    "description": "Read molecule from file",
+	    "default": "true"
+	},
+        "toolkit": {
+            "type": "string",
+            "description": "Default cheminformatics toolkit to use",
+            "default": "pybel"
+        },
+        "mol": {
+            "type": "string",
+            "description": "Moleculare file"
+        },
+        "input_format": {
+            "type": "string",
+            "description": "Structure input file format"
+        },
+        "output_format": {
+            "type": "string",
+            "description": "Structure output file format"
+        },
+	"workdir": {
+	    "type": "string",
+	    "default": "."
+	}
+    },
+    "required": ["mol", "input_format", "output_format"]
+}

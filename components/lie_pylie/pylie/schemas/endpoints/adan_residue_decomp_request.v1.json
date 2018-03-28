@@ -1,0 +1,26 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://mdstudio/schemas/adan_residue_decomp_request.json",
+    "title": "Adan input",
+    "description": "Adan residues decomposition",
+    "type": "object",
+    "properties": {
+	"decomp_files":{
+	    "type": "array",
+	    "default": "Files path to the energy decomposition"
+	},
+	"model_pkl": {
+	    "type": "string",
+	    "description": "Pickle file containing the model"
+	},
+	"cases": {
+	    "type": ["null", "array"],
+	    "default": "null"
+	},
+	"workdir": {
+	    "type": "string",
+	    "default": "."
+	}
+    },
+    "required": ["decompose_files", "model_pka"]
+}

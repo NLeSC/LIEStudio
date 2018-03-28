@@ -5,21 +5,21 @@
 
 ###Basic graph structure
 A graph represented by a Graph class is an object that stores nodes, edges and
-adjacency information in separate GraphDict classes. A GraphDict class is a
+adjacency information in seperate DictStorage classes. A DictStorage class is a
 subclass of the standard Python dictionary and collections MutableMappings
 Abstract Base Class (ABC).
 
-The nodes and edges GraphDict objects store node and edge attributes respectively
+The nodes and edges DictStorage objects store node and edge attributes respectivly
 based on the node ID (nid).
-The graph GraphDict object stores node adjacency and is the primary store for
+The graph DictStorage object stores node adjacency and is the primary store for
 the graph topology.
 
 ###Node ID
 The node ID or nid for short is the unique identifier of a node and derived edges
-in the graph. The Graph class will automatically assign a numeric (int) nid to
-all nodes by default stored as `_id` and 'nid' in the node attributes. The nid
-itself could be any hashable object however but the `_id` attribute will always be
-numeric.
+in the graph. The nid itself can be any hasable object except None. Set auto_nid
+to True in the graph to ensure all added nodes are automatically assigned a unique
+auto incremented integer ID.
+
 
 ###Graph directionality
 A graph is undirected by default storing an two edges for every connected node,
@@ -42,7 +42,7 @@ following Graph methods:
  * query_edges: return subgraph based on a query over edge attributes
 
 The subgraphs returned by these methods are implemented as a dictionary view over
-the keys in the nodes and edges GraphDict objects.
+the keys in the nodes and edges DictStorage objects.
 By default this means that the subgraphs are fully isolated from the parent graph.
 Returning a single node using getnodes will have no neigbors.
 This may not be desirable in circumstances where you want a view over nodes but
@@ -66,5 +66,5 @@ __all__ = ['Graph', 'GraphAxis', 'GraphORM']
 
 # Component imports
 from .graph import Graph
-from .graph_axis_class import GraphAxis
+from .graph_axis.graph_axis_class import GraphAxis
 from .graph_orm import GraphORM

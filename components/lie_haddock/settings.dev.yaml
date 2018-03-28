@@ -1,0 +1,5 @@
+session:
+  username: mdadmin
+  password: this_should_be_replaced_for_production!@#$%^&*()_+1234567890-=
+settings:
+  printInEndpoint: false

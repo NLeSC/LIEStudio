@@ -11,30 +11,31 @@ import os
 import subprocess
 import time
 import json
+import logging
+import pkgutil
 
-from twisted.logger import Logger
-
-logging = Logger()
+logger = logging.getLogger(__name__)
 
 
 def _schema_to_data(schema, data=None, defdict=None):
-    
+
     default_data = defdict or {}
-    
-    properties = schema.get('properties',{})
-    
-    for key,value in properties.items():
+
+    properties = schema.get('properties', {})
+
+    for key, value in properties.items():
         if 'default' in value:
             if 'properties' in value:
                 default_data[key] = _schema_to_data(value)
             else:
                 default_data[key] = value.get('default')
-    
+
     # Update with existing data
     if data:
         default_data.update(data)
-    
+
     return default_data
+
 
 def prepaire_work_dir(path, user=None, create=False):
     """
@@ -60,24 +61,24 @@ def prepaire_work_dir(path, user=None, create=False):
 
     # Check if path
     if not path:
-        logging.debug('No path defined')
+        logger.debug('No path defined')
         return None
 
     # Check if target path exists
     path = os.path.abspath(path)
     if not os.path.exists(path):
-        logging.debug('Working directory does not exist. Try creating it: {0}'.format(path))
+        logger.debug('Working directory does not exist. Try creating it: {0}'.format(path))
 
         # Does not exist, try to create it
         try:
             os.makedirs(path)
         except BaseException:
-            logging.error('Unable to create working directory: {0}'.format(path))
+            logger.error('Unable to create working directory: {0}'.format(path))
             return None
 
     # Is target directory writable
     if not os.access(path, os.W_OK):
-        logging.error('Working directory not writable: {0}'.format(path))
+        logger.error('Working directory not writable: {0}'.format(path))
         return None
 
     # Compose docking directory basename
@@ -89,32 +90,26 @@ def prepaire_work_dir(path, user=None, create=False):
         try:
             os.makedirs(dockdir)
         except BaseException:
-            logging.error('Unable to create working directory: {0}'.format(dockdir))
+            logger.error('Unable to create working directory: {0}'.format(dockdir))
             return None
     else:
-        logging.debug('Create docking working directory path: {0}'.format(dockdir))
+        logger.debug('Create docking working directory path: {0}'.format(dockdir))
 
     return dockdir
 
+
 def cmd_runner(cmd, workdir):
 
-    # Get current directory
-    currdir = os.getcwd()
-
-    # Change to workdir
-    os.chdir(workdir)
-
     # Run cli command
-    logging.debug('Execute cli process: {0}'.format(' '.join(cmd)))
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    logger.debug('Execute cli process: {0}'.format(' '.join(cmd)))
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=workdir)
     output, errors = process.communicate()
     if process.returncode != 0:
-        logging.warn('Executable stopped with non-zero exit code ({0}). Error: {1}'.format(process.returncode, errors))
-
-    # Change back to currdir
-    os.chdir(currdir)
+        logger.warn('Executable stopped with non-zero exit code ({0}). Error: {1}'.format(process.returncode, errors))
 
     return output, errors
 
-PLANTS_DOCKING_SCHEMA = os.path.join(os.path.dirname(__file__), 'plants_docking_schema.json')
-settings = _schema_to_data(json.load(open(PLANTS_DOCKING_SCHEMA)))
+
+PLANTS_DOCKING_SCHEMA = os.path.join(
+    pkgutil.get_data('lie_plants_docking', 'schemas/endpoints/docking_request.v1.json'))
+settings = _schema_to_data(json.loads(PLANTS_DOCKING_SCHEMA))

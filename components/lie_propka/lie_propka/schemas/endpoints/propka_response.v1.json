@@ -1,0 +1,19 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://mdstudio/schemas/propka_response.json",
+    "title": "propka output",
+    "description": "predicts the pKa values of ionizable groups in proteins",
+    "type": "object",
+    "properties": {
+	"status": {
+	    "type": "string",
+	    "description": "Job final status",
+	    "enum": ["failed", "completed"]
+	},
+	"output": {
+	    "type": ["object", "null"],
+	    "description": "propka output"
+	}
+    },
+    "required": ["status", "output"]
+}

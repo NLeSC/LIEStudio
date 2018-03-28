@@ -1,0 +1,19 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://liestudio/schemas/structures_schema.json",
+    "title": "Convert molecule output",
+    "description": "Convert molecule representation",
+    "type": "object",
+    "properties": {	
+	"status": {
+	    "type": "string",
+	    "description": "Job final status",
+	    "enum": ["failed", "completed"]
+	},
+	"mol": {
+	    "type": ["string", "null"],
+	    "description": "Resulting molecule"
+	}
+    },
+    "required": ["mol", "status"]
+}

@@ -1,4 +1,4 @@
-version: '2'
+version: '3'
 services:
 
     workspace:
@@ -33,18 +33,6 @@ services:
         env_file:
             - .docker.env
 
-    echo:
-        extends:
-            file: docker-compose-common.yml
-            service: base-py3
-        volumes:
-            # mount component
-            - ./components/lie_echo:/app/components/lie_echo
-        environment:
-            - COMPONENT=lie_echo
-        links:
-            - crossbar
-
     mongo:
         image: mongo:latest
         ports:
@@ -64,7 +52,9 @@ services:
             - "7001:7001"
         volumes:
             - redis:/data/db
-
+        healthcheck:
+          test: ["CMD", "nc", "-zv", "localhost", "7000-7001"]
+          timeout: 10s
 
 volumes:
     mongo:

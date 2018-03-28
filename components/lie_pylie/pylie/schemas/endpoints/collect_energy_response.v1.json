@@ -1,0 +1,19 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://liestudio/schemas/collect_energies_response.json",
+    "title": "Calculated lie average output",
+    "description": "Import GROMACS MD trajectory energy files into a LIEMDFrame",
+    "type": "object",
+    "properties": {
+	"status": {
+	    "type": "string",
+	    "description": "Job final status",
+	    "enum": ["failed", "completed"]
+	},
+	"mdframe": {
+	    "type": ["string", "null"],
+	    "description": "path to the resulting dataframe"
+	}
+    },
+    "required": ["status", "mdframe"]
+}

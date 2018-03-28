@@ -1,0 +1,20 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema",
+    "id": "http://mdstudio/schemas/descriptors_response.json",
+    "title": "Molecular descriptors output",
+    "description": "Molecular descriptors configuration",
+    "type": "object",
+    "properties": {
+	"status": {
+	    "type": "string",
+	    "description": "Job final status",
+	    "enum": ["failed", "completed"]
+	},
+	"descriptors": {
+	    "type": ["string", "null"],
+	    "description": "Molecular toolkit use",
+	    "default": "pybel"
+	}
+    },
+    "required": ["status", "descriptors"]
+}

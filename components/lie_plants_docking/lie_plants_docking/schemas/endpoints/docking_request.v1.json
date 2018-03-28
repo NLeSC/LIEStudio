@@ -1,0 +1,290 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://liestudio/schemas/plants_docking_schema.json",
+    "title": "Plants",
+    "description": "Plants docking method configuration schema",
+    "type": "object",
+    "properties": {
+	"workdir": {
+	    "type": "string"  ,
+	    "description": "Directory to run the docking simulation",
+	    "default": "."
+	},
+        "exec_path": {
+            "type": "string",
+            "description": "Path to PLANTS executable",
+            "default": "{system.app_path}/bin/plants_{system.platform}"
+        },
+        "scoring_function": {
+            "type": "string",
+            "description": "",
+            "default": "chemplp",
+            "enum": ["plp", "plp95", "chemplp"]
+        },
+        "outside_binding_site_penalty": {
+            "description": "",
+            "type": "number",
+            "default": 50.0
+        },
+        "enable_sulphur_acceptors": {
+            "description": "",
+            "type": "integer",
+            "default": 0
+        },
+        "ligand_intra_score": {
+            "type": "string",
+            "description": "",
+            "default": "clash2"
+        },
+        "chemplp_clash_include_14": {
+            "description": "",
+            "type": "integer",
+            "default": 1
+        },
+        "chemplp_clash_include_HH": {
+            "description": "",
+            "type": "integer",
+            "default": 0
+        },
+        "plp_steric_e": {
+            "description": "",
+            "type": "number",
+            "default": -0.4
+        },
+        "plp_burpolar_e": {
+            "description": "",
+            "type": "number",
+            "default": -0.05
+        },
+        "plp_hbond_e": {
+            "description": "",
+            "type": "number",
+            "default": -2.0
+        },
+        "plp_metal_e": {
+            "description": "",
+            "type": "number",
+            "default": -4.0
+        },
+        "plp_repulsive_weight": {
+            "description": "",
+            "type": "number",
+            "default": 0.5
+        },
+        "plp_tors_weight": {
+            "description": "",
+            "type": "number",
+            "default": 1.0
+        },
+        "chemplp_weak_cho": {
+            "description": "",
+            "type": "integer",
+            "default": 1
+        },
+        "chemplp_charged_hb_weight": {
+            "description": "",
+            "type": "number",
+            "default": 2.0
+        },
+        "chemplp_charged_metal_weight": {
+            "description": "",
+            "type": "number",
+            "default": 2.0
+        },
+        "chemplp_hbond_weight": {
+            "description": "",
+            "type": "number",
+            "default": -3.0
+        },
+        "chemplp_hbond_cho_weight": {
+            "description": "",
+            "type": "number",
+            "default": -3.0
+        },
+        "chemplp_metal_weight": {
+            "description": "",
+            "type": "number",
+            "default": -6.0
+        },
+        "chemplp_plp_weight": {
+            "description": "",
+            "type": "number",
+            "default": 1.0
+        },
+        "chemplp_plp_steric_e": {
+            "description": "",
+            "type": "number",
+            "default": -0.4
+        },
+        "chemplp_plp_burpolar_e": {
+            "description": "",
+            "type": "number",
+            "default": -0.1
+        },
+        "chemplp_plp_hbond_e": {
+            "description": "",
+            "type": "number",
+            "default": -1.0
+        },
+        "chemplp_plp_metal_e": {
+            "description": "",
+            "type": "number",
+            "default": -1.0
+        },
+        "chemplp_plp_repulsive_weight": {
+            "description": "",
+            "type": "number",
+            "default": 1.0
+        },
+        "chemplp_tors_weight": {
+            "description": "",
+            "type": "number",
+            "default": 2.0
+        },
+        "chemplp_lipo_weight": {
+            "description": "",
+            "type": "number",
+            "default": 0.0
+        },
+        "chemplp_intercept_weight": {
+            "description": "",
+            "type": "number",
+            "default": -20.0
+        },
+        "rescore_mode": {
+            "description": "",
+            "type": "string",
+            "default": "simplex"
+        },
+        "search_speed": {
+            "description": "",
+            "type": "string",
+            "default": "speed1",
+            "enum": ["speed1", "speed2", "speed4"]
+        },
+        "protein_file": {
+            "description": "Path to protein mol2 input file",
+            "type": "string"
+        },
+        "ligand_file": {
+            "description": "Path to ligand mol2 input file",
+            "type": "string"
+        },
+        "output_dir": {
+            "description": "Output file path",
+            "type": "string",
+            "default": "."
+        },
+        "write_multi_mol2": {
+            "description": "",
+            "type": "integer",
+            "default": 0
+        },
+        "flip_amide_bonds": {
+            "description": "",
+            "type": "integer",
+            "default": 1
+        },
+        "flip_planar_n": {
+            "description": "",
+            "type": "integer",
+            "default": 1
+        },
+        "flip_ring_corners": {
+            "description": "",
+            "type": "integer",
+            "default": 0
+        },
+        "force_flipped_bonds_planarity": {
+            "description": "",
+            "type": "integer",
+            "default": 0
+        },
+        "force_planar_bond_rotation": {
+            "description": "",
+            "type": "integer",
+            "default": 1
+        },
+        "bindingsite_center": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+                "type": "number"
+            },
+            "default": [0.0, 0.0, 0.0]
+        },
+        "bindingsite_radius": {
+            "description": "",
+            "type": "number",
+            "default": 12
+        },
+        "cluster_structures": {
+            "description": "",
+            "type": "integer",
+            "default": 50
+        },
+        "cluster_rmsd": {
+            "description": "",
+            "type": "number",
+            "default": 1.0
+        },
+        "write_ranking_links": {
+            "description": "",
+            "type": "integer",
+            "default": 0
+        },
+        "write_protein_bindingsite": {
+            "description": "",
+            "type": "integer",
+            "default": 0
+        },
+        "write_protein_conformations": {
+            "description": "",
+            "type": "integer",
+            "default": 0
+        },
+        "write_merged_protein": {
+            "description": "",
+            "type": "integer",
+            "default": 0
+        },
+        "write_merged_ligand": {
+            "description": "",
+            "type": "integer",
+            "default": 0
+        },
+        "write_merged_water": {
+            "description": "",
+            "type": "integer",
+            "default": 0
+        },
+        "write_protein_splitted": {
+            "description": "",
+            "type": "integer",
+            "default": 0
+        },
+        "write_per_atom_scores": {
+            "description": "",
+            "type": "integer",
+            "default": 0
+        },
+        "merge_multi_conf_output": {
+            "description": "",
+            "type": "integer",
+            "default": 0
+        },
+        "min_cluster_size": {
+            "description": "Minimum cluster size for coordinate based clustering",
+            "type": "integer",
+            "default": 2
+        },
+        "min_rmsd_tolerance": {
+            "description": "Minimum RMSD threshold for defining clusters",
+            "type": "number",
+            "default": 4
+        }
+
+    },
+    "required": ["bindingsite_center", "ligand_file", "protein_file"]
+}

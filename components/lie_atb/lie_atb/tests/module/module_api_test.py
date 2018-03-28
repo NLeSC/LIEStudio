@@ -8,8 +8,10 @@ Unit tests for the Automated Topology Builder server API
 
 import os
 import unittest2
-import urllib2
 import re
+import json
+
+from urllib2 import URLError, HTTPError
 
 from lie_atb import ATBServerApi
 from lie_atb.settings import SETTINGS
@@ -104,9 +106,9 @@ class TestAPI(unittest2.TestCase):
         urllib2.HTTPError: HTTP Error 404: Not Found
         """
 
-        self.assertRaises(urllib2.HTTPError, self.api.Molecules.search, molid=213367)
-        self.assertRaises(urllib2.HTTPError, self.api.Molecules.search, notexist='not')
-        self.assertRaises(urllib2.HTTPError, self.api.Molecules.search, netcharge=0)
+        self.assertRaises(HTTPError, self.api.Molecules.search, molid=213367)
+        self.assertRaises(HTTPError, self.api.Molecules.search, notexist='not')
+        self.assertRaises(HTTPError, self.api.Molecules.search, netcharge=0)
 
     def test_molecule_query_getbymolid(self):
         """
@@ -182,12 +184,12 @@ class TestAPI(unittest2.TestCase):
         valid_atb_url = True
         try:
             api.Molecules.search(any='ethanol')
-        except urllib2.URLError:
-            valid_atb_url = False
-            print('ATB server URL {0} not known/reachable'.format('http://host.not.exist'))
-        except urllib2.HTTPError:
+        except HTTPError:
             valid_atb_url = False
             print('ATB query not valid or no valid token')
+        except URLError:
+            valid_atb_url = False
+            print('ATB server URL {0} not known/reachable'.format('http://host.not.exist'))
 
         self.assertFalse(valid_atb_url)
 
@@ -202,9 +204,9 @@ class TestAPI(unittest2.TestCase):
         valid_atb_token = ''
         try:
             api.Molecules.search(any='ethanol')
-        except urllib2.URLError as e:
+        except HTTPError:
             valid_atb_token = u'Could not authenticate account'
-        except urllib2.HTTPError as e:
+        except URLError:
             valid_atb_token = u'Could not authenticate account'
 
         self.assertEqual(valid_atb_token, u'Could not authenticate account')
@@ -254,7 +256,8 @@ class TestAPI(unittest2.TestCase):
         molecule = self.api.Molecules.molid(molid=36825)
         for ffVersion in ('53A6', '54A7'):
             for fformat in ('mtb96_allatom', 'mtb96_uniatom'):
-                pdb_path = os.path.join(self._files_dir, '{0}_{1}_{2}.{3}'.format(molecule.molid, fformat, ffVersion, fformat.split('_')[1]))
+                pdb_path = os.path.join(self._files_dir, '{0}_{1}_{2}.{3}'.format(molecule.molid, fformat, ffVersion,
+                                                                                  fformat.split('_')[1]))
                 self.files_to_delete.append(pdb_path)
 
                 mol = molecule.download_file(file=fformat, outputType='top', ffVersion=ffVersion, hash='HEAD')
@@ -305,7 +308,8 @@ class TestAPI(unittest2.TestCase):
 
         molecule = self.api.Molecules.molid(molid=36825)
         for ffVersion in ('53A6', '54A7'):
-            for fformat in ('pdb_allatom_optimised', 'pdb_allatom_unoptimised', 'pdb_uniatom_optimised', 'pdb_uniatom_unoptimised'):
+            for fformat in ('pdb_allatom_optimised', 'pdb_allatom_unoptimised', 'pdb_uniatom_optimised',
+                            'pdb_uniatom_unoptimised'):
                 pdb_path = os.path.join(self._files_dir, '{0}_{1}_{2}.pdb'.format(molecule.molid, fformat, ffVersion))
                 self.files_to_delete.append(pdb_path)
 
@@ -377,7 +381,7 @@ class TestAPI(unittest2.TestCase):
         mol = molecule.download_file(file='pdb_allatom_optimised', outputType='top', ffVersion='54A7', hash='HEAD')
         try:
             response = self.api.Molecules.submit(pdb=mol, netcharge=0, moltype='heteromolecule', public=True)
-        except urllib2.HTTPError as error:
+        except HTTPError as error:
             response = json.load(error)
 
         if response.get(u'status', None) == u'error':

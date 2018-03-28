@@ -22,6 +22,7 @@ logger = logging.getLogger('pylie')
 
 
 def _open_anything(source):
+
     # Check if the source is a file and open
     if os.path.isfile(source):
         logger.debug("Reading file from disk {0}".format(source))
@@ -63,13 +64,14 @@ def read_gromacs_energy_file(file_or_buffer, columns=None, lowercase=True):
     'FRAME' and 'Time' columns. Using `columns`, a columns selection can be
     specified next to the FRAME and Time columns.
 
-    :param columns:   selection of columns to import
-    :type columns:    :py:list
-    :param lowercase: convert all column headers to lowercase.
-    :type lowercase:  :py:bool
+    :param file_or_buffer:  GROMACS energy file path or file-like object
+    :param columns:         selection of columns to import
+    :type columns:          :py:list
+    :param lowercase:       convert all column headers to lowercase.
+    :type lowercase:        :py:bool
 
-    :return:          energy trajectory as Pandas DataFrame
-    :rtype:           :pandas:DataFrame
+    :return:                energy trajectory as Pandas DataFrame
+    :rtype:                 :pandas:DataFrame
     """
 
     # Which columns to extract. Always the first two, FRAME and Time
@@ -98,7 +100,7 @@ def read_gromacs_energy_file(file_or_buffer, columns=None, lowercase=True):
 
     # Try parsing the numeric data into a numpy array
     try:
-        data = numpy.loadtxt(file_or_buffer, skiprows=1)
+        data = numpy.loadtxt(file_or_buffer, comments='#')
     except IOError:
         logger.error("Unable to import trajectory data from GROMACS energy file {0}".format(file_or_buffer.name))
         return None
@@ -151,18 +153,32 @@ def read_lie_etox_file(file_or_buffer):
 
 
 class MOL2Parser(object):
-    def __init__(self, mol_file, columns):
+    """
+    Parse a Tripos MOL2 file format.
+    """
+    def __init__(self, columns):
 
-        self.mol_file = mol_file
         self.mol_dict = dict([(n, []) for n in columns])
 
-    def parse(self):
+    def parse(self, mol_file):
+        """
+        Parse MOL2 atom definition into named columns and return as
+        dictionary.
+        Currently parses one model only and expects the order of the
+        columns to be respectively: aton number, atom name, x-coor,
+        y-coor, z-coor, SYBYL atom type, residue number, residue name
+        and charge.
+        MOL2 is a free format (no fixed column width). Their should be
+        at least one empty space between each subsequent value on a line.
+        The parser will raise an exception if this is not the case.
 
-        # NOTE: now only import one model
+        :param mol_file:
+        :return:
+        """
 
         read = False
         model = 0
-        for line in self.mol_file.readlines():
+        for line in mol_file.readlines():
             if line.startswith('@<TRIPOS>ATOM'):
                 read = True
                 model += 1
@@ -172,35 +188,39 @@ class MOL2Parser(object):
                 break
 
             if read:
-                line = line.split()
+                l = line.split()
+                if not len(l) >= 9:
+                    raise IOError('FormatError in mol2. Line: {0}'.format(line))
 
-                self.mol_dict['atnum'].append(int(line[0]))
-                self.mol_dict['atname'].append(line[1].upper())
-                self.mol_dict['xcoor'].append(float(line[2]))
-                self.mol_dict['ycoor'].append(float(line[3]))
-                self.mol_dict['zcoor'].append(float(line[4]))
-                self.mol_dict['attype'].append(line[5])
-                self.mol_dict['resnum'].append(int(line[6]))
-                self.mol_dict['resname'].append(re.sub('{0}$'.format(line[6]), '', line[7]))
-                self.mol_dict['charge'].append(float(line[8]))
+                try:
+                    self.mol_dict['atnum'].append(int(l[0]))
+                    self.mol_dict['atname'].append(l[1].upper())
+                    self.mol_dict['xcoor'].append(float(l[2]))
+                    self.mol_dict['ycoor'].append(float(l[3]))
+                    self.mol_dict['zcoor'].append(float(l[4]))
+                    self.mol_dict['attype'].append(l[5])
+                    self.mol_dict['resnum'].append(int(l[6]))
+                    self.mol_dict['resname'].append(re.sub('{0}$'.format(l[6]), '', l[7]))
+                    self.mol_dict['charge'].append(float(l[8]))
+                except ValueError, e:
+                    raise IOError('FormatError in mol2. Line: {0}, error {1}'.format(line, e))
 
         return self.mol_dict
 
 
 class PDBParser(object):
-    def __init__(self, pdb_file, columns):
+    def __init__(self, columns):
 
-        self.pdb_file = pdb_file
         self.pdb_dict = dict([(n, []) for n in columns])
 
-    def parse(self):
+    def parse(self, pdb_file):
 
         atomline = re.compile('(ATOM)')
         hetatmline = re.compile('HETATM')
         modelline = re.compile('MODEL')
 
         modelcount = 0
-        for line in self.pdb_file.readlines():
+        for line in pdb_file.readlines():
             line = line[:-1]
 
             if modelline.match(line):
@@ -224,6 +244,12 @@ class PDBParser(object):
 
     @staticmethod
     def __assign_sybyl_atomtype(valuedict):
+        """
+        Add SYBYL atom type information.
+
+        Only supports predefined SYBYL types for common amino-acid atoms based
+        on the AA_SYBYL_TYPES dictionary.
+        """
 
         ra_id = '{0}-{1}'.format(valuedict.get('resname', ''), valuedict.get('atname', ''))
         return AA_SYBYL_TYPES.get(ra_id, None)

@@ -27,25 +27,25 @@ distribution_name = 'lie_structures'
 
 setup(
     name=distribution_name,
-    version=0.1,
-    description='LIEStudio structure database module',
-    author='Marc van Dijk, VU University, Amsterdam, The Netherlands',
-    author_email='m4.van.dijk@vu.nl',
-    url='https://github.com/NLeSC/LIEStudio',
+    version=0.2,
+    description='MDStudio structure database module',
+    author="""
+    Marc van Dijk - VU University - Amsterdam
+    Paul Visscher - Zefiros Software (www.zefiros.eu)
+    Felipe Zapata - eScience Center (https://www.esciencecenter.nl/)""",
+    author_email=['m4.van.dijk@vu.nl', 'f.zapata@esciencecenter.nl'],
+    url='https://github.com/MD-Studio/MDStudio',
     license='Apache Software License 2.0',
-    keywords='LIEStudio structures database',
+    keywords='MDStudio structures database',
     platforms=['Any'],
     packages=find_packages(),
-    package_data={'': ['*.json']},
     py_modules=[distribution_name],
-    install_requires=['openbabel', 'biopython', 'jsonschema'],
+    install_requires=['biopython', 'cinfony', 'openbabel', 'pandas',
+                      'pydpi', 'JPype1', 'Pillow', 'retrying', 'scipy'],
+    extras_require={'test': ['unittest2']},
+    dependency_links=["https://github.com/cinfony/cinfony/tarball/master#egg=cinfony"],
     include_package_data=True,
     zip_safe=True,
-    entry_points={
-        'autobahn.twisted.wamplet': [
-            'wamp_services = lie_structures.wamp_services:make'
-        ],
-    },
     classifiers=[
         'Development Status :: 3 - Alpha',
         'License :: OSI Approved :: Apache Software License',

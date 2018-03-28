@@ -15,7 +15,7 @@ import pprint
 import pickle
 import logging as logger
 
-from ..graph import Graph
+from lie_graph.graph import Graph
 
 
 def write_graph(graph, path=os.path.join(os.getcwd(), 'graph.gpf'), pickle_graph=False):
@@ -102,6 +102,6 @@ def read_graph(graph_file, graph=None, pickle_graph=False):
     else:
         with open(graph_file) as f:
             code = compile(f.read(), "GPF_file", 'exec')
-            exec(code, global_vars, local_vars)
+            exec(code)
 
     return graph

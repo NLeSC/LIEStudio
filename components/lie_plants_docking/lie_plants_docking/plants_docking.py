@@ -9,19 +9,16 @@ Classes for protein-ligand docking using the PLANTS software:
   URL: http://www.tcd.uni-konstanz.de/research/plants.php
 """
 
+import logging
 import os
 import csv
 
-from twisted.logger import Logger
-from lie_config import configwrapper
-
-from .docking_base import DockingBase
-from .plants_conf import PLANTS_CONF_FILE_TEMPLATE
-from .utils import cmd_runner, settings
-from .clustering import coords_from_mol2, ClusterStructures
+from lie_plants_docking.docking_base import DockingBase
+from lie_plants_docking.plants_conf import PLANTS_CONF_FILE_TEMPLATE
+from lie_plants_docking.utils import cmd_runner
+from lie_plants_docking.clustering import (coords_from_mol2, ClusterStructures)
 
 
-@configwrapper('lie_plants_docking')
 class PlantsDocking(DockingBase):
     """
     Class for running a protein-ligand docking using the PLANTS docking
@@ -53,16 +50,14 @@ class PlantsDocking(DockingBase):
                         PLANTS configuration options
     :type kwargs:       dict
     """
+    logger = logging.getLogger(__name__)
 
-    allowed_config_options = settings
-    logging = Logger()
-
-    def __init__(self, user_meta={}, **kwargs):
+    def __init__(self, workdir=None, user_meta={}, **kwargs):
 
         self.user_meta = user_meta
 
-        self._config = kwargs
-        self._workdir = None
+        self.config = kwargs
+        self.workdir = workdir
 
     def results(self):
         """
@@ -85,53 +80,32 @@ class PlantsDocking(DockingBase):
         # Read docking results: first try features.csv, else ranking.csv
         results = {}
         for resultcsv in ('features.csv', 'ranking.csv'):
-            resultcsv = os.path.join(self._workdir, resultcsv)
+            resultcsv = os.path.join(self.workdir, resultcsv)
             if os.path.isfile(resultcsv):
 
-                csvfile = open(resultcsv, 'r')
-                reader = csv.DictReader(csvfile)
-                for i, row in enumerate(reader):
-                    mol2 = row.get('TOTAL_SCORE', i)
-                    results[mol2] = row
-                    results[mol2]['path'] = os.path.join(self._workdir, '{0}.mol2'.format(mol2))
+                with open(resultcsv, 'r') as csvfile:
+                    reader = csv.DictReader(csvfile)
+                    for i, row in enumerate(reader):
+                        mol2 = row.get('TOTAL_SCORE', i)
+                        results[mol2] = row
+                        results[mol2]['path'] = os.path.join(
+                            self.workdir, '{0}.mol2'.format(mol2))
                 break
 
         # Run a clustering
         structures = [mol2.get('path') for mol2 in results.values()]
         xyz = coords_from_mol2(structures)
-        c = ClusterStructures(xyz, labels=results.keys())
-        clusters = c.cluster(4, min_cluster_count=2)
+        c = ClusterStructures(xyz, labels=list(results.keys()))
+        clusters = c.cluster(self.config.get('min_rmsd_tolerance', 4.0),
+                             min_cluster_count=self.config.get('min_cluster_size', 2))
 
         for structure, res in clusters.items():
             results[structure].update(res)
 
+        # Plot cluster results
+        c.plot(to_file=os.path.join(self.workdir, 'cluster_dendrogram.pdf'))
+
         return results
-
-    def format_config_file(self):
-        """
-        Format configuration as PLANTS *.conf file format
-
-        The PLANTS_CONF_FILE_TEMPLATE serves as a template where
-        option values are replaced by format placeholders with the
-        same name as the keys in the configuration dictionary.
-
-        Consistency of the configuration options is checked before
-        configuration file creation to ensure that all required
-        options are available. If options are missing from the
-        configuration dictionary they will be added with default
-        values.
-
-        :return: PLANTS configuration file
-        :rtype:  str
-        """
-
-        for key, value in self.allowed_config_options.items():
-            if key not in self._config:
-                self._config[key] = value
-                self.logging.warn('Required "{0}" configuration option not defined. Add with default option {1}'.format(key, value), **self.user_meta)
-
-        confstring = PLANTS_CONF_FILE_TEMPLATE.format(**self._config)
-        return confstring
 
     def run(self, protein, ligand, mode='screen'):
         """
@@ -147,6 +121,11 @@ class PlantsDocking(DockingBase):
         The `run` function will exit if any of these requirements are not
         resolved.
 
+        The PLANTS_CONF_FILE_TEMPLATE serves as a template where
+        option values are replaced by format placeholders with the
+        same name as the keys in the configuration dictionary.
+
+
         :param protein: protein 3D structure in mol2 format
         :type protein:  str
         :param ligand:  ligand 3D structure in mol2 format
@@ -160,55 +139,49 @@ class PlantsDocking(DockingBase):
         """
 
         # Check required PLANTS configuration arguments
-        self._workdir = self._config.get('workdir', None)
-        if self._workdir:
-            self._workdir = os.path.abspath(self._workdir)
-            if not os.path.exists(self._workdir):
-                self.logging.error('Working directory {0} does not exist'.format(self._workdir), **self.user_meta)
-                return False
-            if not os.access(self._workdir, os.W_OK):
-                self.logging.error('Working directory {0} not writable'.format(self._workdir), **self.user_meta)
-                return False
-        else:
-            self.logging.error('Working directory not defined (workdir parameter)', **self.user_meta)
+        self.workdir = os.path.abspath(self.workdir)
+        if not os.path.exists(self.workdir):
+            self.logger.error('Working directory {0} does not exist'.format(self.workdir), **self.user_meta)
+            return False
+        if not os.access(self.workdir, os.W_OK):
+            self.logger.error('Working directory {0} not writable'.format(self.workdir), **self.user_meta)
             return False
 
-        exec_path = self._config.get('exec_path')
+        exec_path = self.config.get('exec_path')
         if not os.path.exists(exec_path):
-            self.logging.error('Plants executable not available at: {0}'.format(exec_path), **self.user_meta)
+            self.logger.error('Plants executable not available at: {0}'.format(exec_path), **self.user_meta)
             return False
         if not os.access(exec_path, os.X_OK):
-            self.logging.error('Plants executable {0} does not have exacutable permissions'.format(exec_path), **self.user_meta)
+            self.logger.error('Plants executable {0} does not have exacutable permissions'.format(exec_path), **self.user_meta)
             return False
 
-        if not self._config.get('bindingsite_center'):
-            self.logging.error('Binding site center not defined', **self.user_meta)
-            return False
-        if sum(self._config.get('bindingsite_center')) == 0 or len(self._config.get('bindingsite_center')) != 3:
-            self.logging.error('Malformed binding site center definition: {0}'.format(self._config.get('bindingsite_center')), **self.user_meta)
+        if sum(self.config.get('bindingsite_center')) == 0 or len(self.config.get('bindingsite_center')) != 3:
+            self.logger.error('Malformed binding site center definition: {0}'.format(self.config.get('bindingsite_center')), **self.user_meta)
             return False
 
         # Copy files to working directory
         if os.path.isfile(protein):
-            self._config['protein_file'] = protein
+            self.config['protein_file'] = protein
         else:
-            with open(os.path.join(self._workdir, 'protein.mol2'), 'w') as protein_file:
+            with open(os.path.join(self.workdir, 'protein.mol2'), 'w') as protein_file:
                 protein_file.write(protein)
-                self._config['protein_file'] = 'protein.mol2'
+                self.config['protein_file'] = 'protein.mol2'
 
         if os.path.isfile(ligand):
-            self._config['ligand_file'] = ligand
+            self.config['ligand_file'] = ligand
         else:
-            with open(os.path.join(self._workdir, 'ligand.mol2'), 'w') as ligand_file:
+            with open(os.path.join(self.workdir, 'ligand.mol2'), 'w') as ligand_file:
                 ligand_file.write(ligand)
-                self._config['ligand_file'] = 'ligand.mol2'
-        
-        # Write PLANTS configuration file    
-        conf_file = os.path.join(self._workdir, 'plants.config')
+                self.config['ligand_file'] = 'ligand.mol2'
+
+        # Write PLANTS configuration file
+        conf_file = os.path.join(self.workdir, 'plants.config')
         with open(conf_file, 'w') as conf:
-            conf.write(self.format_config_file())
+            conf.write(PLANTS_CONF_FILE_TEMPLATE.format(**self.config))
 
         cmd = [exec_path, '--mode', mode, 'plants.config']
-        output, error = cmd_runner(cmd, self._workdir)
+        self.logger.info(
+            "Running plants_docking command:\n{}".format(' '.join(cmd)))
+        output, error = cmd_runner(cmd, self.workdir)
 
         return True

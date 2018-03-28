@@ -80,4 +80,4 @@ class DockingBase(object):
                 elif os.path.isdir(file_to_remove):
                     shutil.rmtree(file_to_remove)
             except Exception as e:
-                logging.warn('Unable to remove path: {0}, with error: {1}'.format(file_to_remove, e))
+                self.logging.warn('Unable to remove path: {0}, with error: {1}'.format(file_to_remove, e))

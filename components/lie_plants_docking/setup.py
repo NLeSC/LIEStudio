@@ -27,25 +27,22 @@ distribution_name = 'lie_plants_docking'
 
 setup(
     name=distribution_name,
-    version=0.1,
-    description='LIEStudio molecular docking module using PLANTS',
-    author='Marc van Dijk, VU University, Amsterdam, The Netherlands',
-    author_email='m4.van.dijk@vu.nl',
-    url='https://github.com/NLeSC/LIEStudio',
+    version=0.2,
+    description='MDStudio molecular docking module using PLANTS',
+    author="""
+    Marc van Dijk - VU University - Amsterdam
+    Paul Visscher - Zefiros Software (www.zefiros.eu)
+    Felipe Zapata - eScience Center (https://www.esciencecenter.nl/)""",
+    author_email=['m4.van.dijk@vu.nl', 'f.zapata@esciencecenter.nl'],
+    url='https://github.com/MD-Studio/MDStudio',
     license='Apache Software License 2.0',
-    keywords='LIEStudio molecular docking PLANTS',
+    keywords='MDStudio molecular docking PLANTS',
     platforms=['Any'],
     packages=find_packages(),
-    package_data={'': ['*.json']},
     py_modules=[distribution_name],
-    install_requires=['scipy','jsonschema'],
+    install_requires=['matplotlib', 'scipy'],
     include_package_data=True,
     zip_safe=True,
-    entry_points={
-        'autobahn.twisted.wamplet': [
-            'wamp_services = lie_plants_docking.wamp_services:make'
-        ],
-    },
     classifiers=[
         'Development Status :: 3 - Alpha',
         'License :: OSI Approved :: Apache Software License',

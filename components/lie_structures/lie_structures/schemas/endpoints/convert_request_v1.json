@@ -1,0 +1,7 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://liestudio/schemas/convert_request.json",
+    "title": "Convert molecule input",
+    "description": "Convert molecule representation",
+    "$ref": "resource://mdgroup/lie_structures/read_write_mol/v1"
+}

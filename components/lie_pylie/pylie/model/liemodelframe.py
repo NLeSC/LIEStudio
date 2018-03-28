@@ -309,16 +309,15 @@ class LIEModelBuilder(LIEDataFrameBase):
 
     def __init__(self, *args, **kwargs):
 
-        if 'dataframe' in kwargs:
-            dataframe = kwargs.get('dataframe', None)
+        dataframe = kwargs.pop('dataframe', None)
+        if isinstance(dataframe, DataFrame):
             if not type(dataframe) == LIEDataFrame:
                 raise AssertionError(
                     "Input dataformat needs to be of LIEDataFrame type. Got {0}".format(type(dataframe)))
-            else:
-                self._metadata['dataframe'] = dataframe
-                kwargs.pop('dataframe')
 
         super(LIEModelBuilder, self).__init__(*args, **kwargs)
+
+        self._metadata['dataframe'] = dataframe
 
     @property
     def _constructor(self):

@@ -6,6 +6,8 @@ app/dist/
 data/logs/
 data/liedb/
 docs/html/
+bin/
+tmp/
 
 # This file is different per user
 data/settings.json
@@ -66,8 +68,7 @@ coverage.xml
 docs/_build/
 
 # Virtualenv en venv
-lie_venv/
-.venv/
+venv/
 
 # Linux trash folder which might appear on any partition or disk
 .Trash-*
@@ -216,6 +217,10 @@ docker/.USERDONE
 
 # emacs
 *~
+
+# MDSTUDIO
+cerise_config.json
 venv
 .env
 **/.settings.*.yml
+

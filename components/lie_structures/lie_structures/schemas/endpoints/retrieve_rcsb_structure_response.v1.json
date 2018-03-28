@@ -1,0 +1,19 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://mdstudio/schemas/structures_schema.json",
+    "title": "Download PDB output",
+    "description": "Download a structure file from the RCSB database using a PDB ID",
+    "type": "object",
+    "properties": {	
+	"status": {
+	    "type": "string",
+	    "description": "Job final status",
+	    "enum": ["failed", "completed"]
+	},
+	"mol": {
+	    "type": ["string", "null"],
+	    "description": "Resulting molecule"
+	}
+    },
+    "required": ["status", "mol"]
+} 

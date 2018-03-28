@@ -2,11 +2,9 @@
 
 """
 LIEStudio docking component
-
 This module performs molecular docking with the focus on docking
 small molecular weight compounds (e.a. ligand) in protein
 functional sites using the PLANTS molecular docking methods.
-
 - PLANTS: Protein-Ligand ANT System.
 """
 
@@ -22,8 +20,10 @@ __licence__ = 'Apache Software License 2.0'
 __url__ = 'https://github.com/NLeSC/LIEStudio'
 __copyright__ = "Copyright (c) VU University, Amsterdam"
 __rootpath__ = os.path.dirname(__file__)
-__all__ = ['PlantsDocking']
 
 from .plants_docking import PlantsDocking
 from .utils import PLANTS_DOCKING_SCHEMA as plants_docking_schema
 from .utils import settings
+
+
+__all__ = ['PlantsDocking', 'plants_docking_schema', 'settings']

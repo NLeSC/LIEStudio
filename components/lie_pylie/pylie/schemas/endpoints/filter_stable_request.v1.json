@@ -1,0 +1,71 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://mdstudio/schemas/filter_stable_request.json",
+    "title": "Filter stable input",
+    "description": "Use FFT and spline-based filtering to detect and extract stable regions",
+    "type": "object",
+    "properties": {
+	"mdframe": {
+	    "type": "string",
+	    "description": "Path to the dataframe"
+	},
+	"do_plot": {
+	    "type": "boolean",
+	    "default": "false"
+	},
+	"do_filter": {
+	    "type": "boolean",
+	    "default": "true"
+	},
+	"plotFileType": {
+	    "type": "string",
+	    "default": "pdf"
+	},
+	"workdir": {
+	    "type": "string",
+	    "default": "."
+	},
+	"FilterSplines": {
+	    "type": "object",
+	    "description": "FilterSplines class: FFT based spline filtering of MD (energy) trajectories",
+	    "default": {
+		"fftfreq": {
+		    "type": "number",
+		    "description": "Filter frequencies higher than X. The higher the number, the more bumps.",
+		    "default": 15},
+		"gradco": {
+		    "type": "number",
+		    "default": 0.2,
+		    "description": "Gradient cutoff: if value higher than X, the gradient is high enough, there is a change"},
+		"gradco_mult":{
+		    "type": "number",
+		    "default": 100,
+		    "description": "Gradient multiplication factor for plotting"},
+		"gradcl": {
+		    "type": "number",
+		    "default": 0.0,
+		    "description": "Clean 0.1*length from start and end (0 means no cleaning, recommended. Only use with FFTfreq ~5 and lower)"
+		},
+		"minlength":{
+		    "type": "number",
+		    "default":100,
+		    "description": "Minimal length of stable data (in datapoints, not time!)"},
+		"extend":{
+		    "type": "boolean",
+		    "default": "True",
+		    "description": "If stable stretch is longer then minlength, use full stretch if TRUE"
+		},
+		"doublespline":{
+		    "type": "boolean",
+		    "default": "True",
+		    "description": "Perform double spline fitting on FFT output (recommended)"},
+		"splinesmooth": {
+		    "type": "boolean",
+		    "default": 999,
+		    "description": "Smoothness of the spline (low is smoother, 0 gives the orig data back)"}
+	    }
+	}
+    },
+    "required": ["mdframe"]
+}
+

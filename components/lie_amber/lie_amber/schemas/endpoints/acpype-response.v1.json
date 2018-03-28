@@ -1,0 +1,18 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema",
+    "title": "acpype output",
+    "description": "ACPYPE output",
+    "type": "object",
+    "properties": {
+	"status": {
+	    "type": "string",
+	    "description": "ACPYPE final status",
+	    "enum": ["failed", "completed"]
+	},
+	"output": {
+	    "type": "object",
+	    "description": "Dictionary containing the ACYPE output files"
+	}
+    },
+    "required": ["status", "output"]
+}

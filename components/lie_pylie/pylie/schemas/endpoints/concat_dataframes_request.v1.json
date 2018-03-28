@@ -1,0 +1,34 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://liestudio/schemas/concat_input.json",
+    "title": "Concat dataframes input",
+    "description": "Concatenate dataframes",
+    "type": "object",
+    "properties": {
+	"dataframes": {
+	    "type": "array",
+	    "description": "Path to the dataframes"
+	},
+	"ignore_index": {
+	    "type": "boolean",
+	    "default": "true"
+	},
+	"index": {
+	    "type": "numeral",
+	    "default": 0
+	},
+	"join": {
+	    "type": "string",
+	    "default": "outer"
+	},
+	"fileformat": {
+	    "type": "string",
+	    "default": "csv"
+	},
+	"workdir": {
+	    "type": "string",
+	    "default": "."
+	}
+    },
+    "required": ["dataframes"]
+}

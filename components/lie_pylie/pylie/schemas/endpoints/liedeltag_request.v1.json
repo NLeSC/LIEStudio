@@ -1,0 +1,31 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://liestudio/schemas/deltatag_input.json",
+    "title": "Deltatag input",
+    "description": "Deltatag",
+    "type": "object",
+    "properties": {
+	"dataframe": {
+	    "type": "string",
+	    "description": "Path to the dataframe"
+	},
+	"alpha_beta_gamma": {
+	    "type": "array",
+	    "default": [0.5, 0.5, 0.0]
+	},
+	"kBt": {
+	    "type": "number",
+	    "default": 2.49
+	},
+	"fileformat": {
+	    "type": "string",
+	    "default": "csv"
+	},
+	"workdir": {
+	    "type": "string",
+	    "default": "."
+	}
+    },
+    "required": ["dataframe"]
+}
+

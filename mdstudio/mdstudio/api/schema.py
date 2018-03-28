@@ -150,7 +150,7 @@ class EndpointSchema(ISchema):
 
         try:
             self._retrieve_local(ldir, self.schema_path, self.versions)
-        except FileNotFoundError as ex:
+        except IOError as ex:
             raise RegisterException('Tried to access schema "{}/{}" with versions {}, '
                                     'but the schema was not found:\n{}'.format(ldir, self.schema_path, self.versions, str(ex)))
 

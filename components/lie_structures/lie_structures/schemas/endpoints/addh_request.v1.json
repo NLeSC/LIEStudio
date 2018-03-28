@@ -1,0 +1,47 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://liestudio/schemas/addh_input.json",
+    "title": "Add hydrogens",
+    "description": "Add hydrogens to molecule",
+    "type": "object",
+    "properties": {
+	"from_file": {
+	    "type": "boolean",
+	    "description": "Read molecule from file",
+	    "default": "true"
+	},
+        "toolkit": {
+            "type": "string",
+            "description": "Default cheminformatics toolkit to use",
+            "default": "pybel"
+        },
+        "mol": {
+            "type": "string",
+            "description": "Moleculare file"
+        },
+        "input_format": {
+            "type": "string",
+            "description": "Structure input file format"
+        },
+        "correctForPH": {
+            "type": "boolean",
+            "description": "Correct for pH when adding hydrogens to the structure",
+            "default": false
+        },
+        "pH": {
+            "type": "number",
+            "description": "Target pH to correct for when adding hydrogens to the structure",
+            "default": 7.4
+        },
+        "polaronly": {
+            "type": "boolean",
+            "description": "Only add polar hydrogens to the structure",
+            "default": false
+        },
+	"workdir": {
+	    "type": "string",
+	    "default": "."
+	}
+    },
+    "required": ["mol", "input_format"]
+}

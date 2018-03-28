@@ -1,0 +1,3 @@
+mdstudio_cli -u liestudio.atb.molecule_query --common_name aspirin
+mdstudio_cli -u liestudio.structure.retrieve_rcsb_structure --pdb_id 3cro > 3cro.pdb
+mdstudio_cli -u liestudio.structure.convert --mol 3cro.pdb --output_format mol2 --from_file

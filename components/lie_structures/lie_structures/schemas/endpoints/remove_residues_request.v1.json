@@ -1,0 +1,29 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema",
+    "id": "http://mdstudio/schemas/removed_residues_request.json",
+    "title": "Chemical similarity input",
+    "description": "Calculate the chemical similarity between structures",
+    "type": "object",
+    "properties": {
+        "mol": {
+            "type": ["string", "object"],
+            "description": "Moleculare file"
+        },
+        "from_file": {
+            "type": "boolean",
+            "description": "Read molecule from file",
+            "default": "true"
+        },
+        "residues": {
+            "type": "array",
+            "description": "Residues to remove",
+            "default": []
+        },
+        "workdir": {
+            "type": "string",
+            "description": "Working directory",
+            "default": "."
+        }
+    },
+    "required": ["mol"]
+}

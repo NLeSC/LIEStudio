@@ -4,7 +4,6 @@ from mdstudio.cache import CacheType
 from mdstudio.cache.cache import ICache
 import mdstudio
 
-
 class SessionCacheWrapper(ICache):
 
     def __init__(self, session, cache_type=CacheType.User):
@@ -78,3 +77,4 @@ class SessionCacheWrapper(ICache):
 
     def _call(self, uri, request):
         return self.session.call('mdstudio.cache.endpoint.{}'.format(uri), request, claims=mdstudio.api.context.ContextManager.get('call_context').get_cache_claims(self.cache_type))
+

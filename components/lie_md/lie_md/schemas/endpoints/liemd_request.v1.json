@@ -1,0 +1,123 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://mdstudio/schemas/gromacs_lie_request.json",
+    "title": "GromacsLIE",
+    "description": "LIE using GROMACS MD software",
+    "type": "object",
+    "properties": {
+        "protein_file": {
+            "type": ["string", "null"],
+            "description": "Protein PDB input file"
+        },
+        "ligand_file": {
+            "type": "string",
+            "description": "Ligand PDB input file"
+        },
+        "topology_file": {
+            "type": "string",
+            "description": "Ligand GROMACS topology file"
+        },
+	"include": {
+	    "type": "array",
+	    "description": "List of *itp files included in the topology"
+	},
+	"residues": {
+	    "type": "array",
+	    "description": "Indices of the protein residues use to compute the energy groups"
+	},
+	"cerise_file": {
+	    "type": "string",
+	    "description": "Path to the cerise path file configuration"
+	},
+        "sim_time": {
+            "type": "number",
+            "description": "Simulation time in ns.",
+            "default": 1.0
+        },
+        "forcefield": {
+            "type": "string",
+            "description": "Forcefield definition to use",
+            "default": "amber99sb"
+        },
+        "gromacs_lie": {
+            "type": "boolean",
+            "description": "Run GROMACS LIE calculation",
+            "default": true
+        },
+        "gromacs_vsite": {
+            "type": "boolean",
+            "description": "Use GROMACS virtual sites",
+            "default": true
+        },
+        "gromacs_nldp": {
+            "type": "boolean",
+            "description": "Perform simulations in a optimal (NDLP) simulation cell",
+            "default": false
+        },
+        "gromacs_rtc": {
+            "type": "boolean",
+            "description": "Use roto-translational constraints",
+            "default": false
+        },
+        "solvent": {
+            "type": "string",
+            "description": "Solvent model to use",
+            "default": "tip3p"
+        },
+        "electrostatics": {
+            "type": "string",
+            "description": "Treatment of electrostatic interactions",
+            "enum": ["RF", "PME"],
+            "default": "PME"
+        },
+        "temperature": {
+            "type": "array",
+            "description": "Temperature (deg. Kelvin)",
+            "default": [100,200,300]
+        },
+        "ttau": {
+            "type": "number",
+            "description": "Coupling time for temperature (ps)",
+            "default": 0.1
+        },
+        "pressure": {
+            "type": "number",
+            "description": "pressure",
+            "default": 1.01325
+        },
+        "ptau": {
+            "type": "number",
+            "description": "Coupling time for pressure (ps)",
+            "default": 0.5
+        },
+        "resolution": {
+            "type": "number",
+            "description": "Output resolution in ns",
+            "default": 0.002
+        },
+        "prfc" :{
+            "type": "array",
+            "description": "Position restraint force constant",
+            "default": [10000,5000,50,0]
+        },
+        "periodic_distance": {
+            "type": "number",
+            "description": "Minimal distance between periodic images",
+            "default": 1.8
+        },
+        "salinity": {
+            "type": "number",
+            "description": "Salt concentration in mol/l. By default, counterions will be added. If the concentration is set negative, then salt is added without compensating for overall charge of the system. Setting the concentration to -0 will disable addition of ions",
+            "default": 0.1539976
+        },
+        "charge": {
+            "type": "number",
+            "description": "Charge to compensate (overrules charge of system)"
+        },
+        "gmxrc": {
+            "type": "string",
+            "description": "Path to GROMACS GMXRC file"
+        }
+    },
+    "required": ["ligand_file", "protein_top", "topology_file", "residues", "cerise_file"]
+}

@@ -1,0 +1,101 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema",
+    "title": "acpype",
+    "description": "ACPYPE program configuration",
+    "type": "object",
+    "properties": {
+        "structure": {
+            "type": "string",
+            "description": "Molecular geometry"
+        },
+	"from_file": {
+	    "type": "boolean",
+	    "description": "Is the structure a path to a file?",
+	    "default": false
+	},
+	"workdir": {
+	    "type": "string",
+	    "description": "Work directory",
+	    "default": "."
+	},
+        "charge_method": {
+            "type": "string",
+            "description": "Charge method: gas, bcc (default), user (user's charges in mol2 file)",
+            "default": "bcc",
+            "enum": ["gas", "bcc", "user"]
+        },
+        "net_charge": {
+            "type": "integer",
+            "description": "Net molecular charge (int), for gas default is 0",
+            "default": 0
+        },
+        "multiplicity": {
+            "type": "integer",
+            "description": "multiplicity (2S+1), default is 1",
+            "default": 1
+        },
+        "atom_type": {
+            "type": "string",
+            "description": "Atom type, can be gaff or amber (AMBER99+SB), default is gaff",
+            "default": "gaff",
+            "enum": ["gaff", "amber"]
+        },
+        "engine": {
+            "type": "string",
+            "description": "Engine: tleap (default) or sleap (not fully matured)",
+            "default": "tleap",
+            "enum": ["tleap", "sleap"]
+        },
+        "outtop": {
+            "type": "string",
+            "description": "Output topologies: all (default), gmx, cns or charmm",
+            "default": "all"
+        },
+        "max_time": {
+            "type": "integer",
+            "description": "Max time (in sec) tolerance for sqm/mopac, default is 10 hours",
+            "default": 36000
+        },
+        "chiral": {
+            "type": "boolean",
+            "description": "Create improper dihedral parameters for chiral atoms in CNS",
+            "default": false
+        },
+        "sorted": {
+            "type": "boolean",
+            "description": "Sort atoms for GMX ordering",
+            "default": false
+        },
+        "direct": {
+            "type": "boolean",
+            "description": "Amb2gmx mode, does a direct conversion, for any solvent",
+            "default": false
+        },
+        "disambiguate": {
+            "type": "boolean",
+            "description": "Disambiguate lower and uppercase atomtypes in GMX top file",
+            "default": false
+        },
+        "cnstop": {
+            "type": "boolean",
+            "description": "Write CNS topology with allhdg-like parameters (experimental)",
+            "default": false
+        },
+        "gmx45": {
+            "type": "boolean",
+            "description": "Write GMX dihedrals for GMX 4.5",
+            "default": false
+        },
+        "force": {
+            "type": "boolean",
+            "description": "Force topologies recalculation anew",
+            "default": false
+        },
+        "keyword": {
+            "type": "string",
+            "description": "mopac or sqm keyword",
+            "default": "scfconv=1.d-08"
+        }
+    },
+    "required": ["structure"]
+}

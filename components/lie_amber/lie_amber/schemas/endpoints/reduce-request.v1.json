@@ -1,0 +1,248 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema",
+    "title": "reduce amber",
+    "description": "Amber reduce program configuration",
+    "type": "object",
+    "properties": {
+        "structure": {
+            "type": "string",
+            "description": "Molecular geometry"
+        },
+	"from_file": {
+	    "type": "boolean",
+	    "description": "Is the structure a path to a file?",
+	    "default": false
+	},
+	"workdir": {
+	    "type": "string",
+	    "description": "Work directory",
+	    "default": "."
+	},	
+        "flip": {
+            "type": "boolean",
+            "description": "",
+            "default": false
+        },
+        "noflip": {
+            "type": "boolean",
+            "description": "",
+            "default": true
+        },
+        "trim": {
+            "type": "boolean",
+            "description": "",
+            "default": false
+        },
+        "nuclear": {
+            "type": "boolean",
+            "description": "",
+            "default": false
+        },
+        "nooh": {
+            "type": "boolean",
+            "description": "",
+            "default": false
+        },
+        "oh": {
+            "type": "boolean",
+            "description": "",
+            "default": true
+        },
+        "his": {
+            "type": "boolean",
+            "description": "",
+            "default": false
+        },
+        "noheth": {
+            "type": "boolean",
+            "description": "",
+            "default": false
+        },
+        "rotnh3": {
+            "type": "boolean",
+            "description": "",
+            "default": false
+        },
+        "norotnh3": {
+            "type": "boolean",
+            "description": "",
+            "default": true
+        },
+        "rotexist": {
+            "type": "boolean",
+            "description": "",
+            "default": false
+        },
+        "rotexoh": {
+            "type": "boolean",
+            "description": "",
+            "default": false
+        },
+        "allalt": {
+            "type": "boolean",
+            "description": "",
+            "default": true
+        },
+        "onlya": {
+            "type": "boolean",
+            "description": "",
+            "default": false
+        },
+        "charges": {
+            "type": "boolean",
+            "description": "",
+            "default": false
+        },
+        "norotmet": {
+            "type": "boolean",
+            "description": "",
+            "default": false
+        },
+        "noadjust": {
+            "type": "boolean",
+            "description": "",
+            "default": false
+        },
+        "nobuild": {
+            "type": "boolean",
+            "description": "",
+            "default": false
+        },
+        "build": {
+            "type": "boolean",
+            "description": "",
+            "default": true
+        },
+        "keep": {
+            "type": "boolean",
+            "description": "",
+            "default": false
+        },
+        "maxaromdih": {
+            "type": "integer",
+            "description": "",
+            "default": 10
+        },
+        "nbonds": {
+            "type": "integer",
+            "description": "",
+            "default": 3
+        },
+        "model": {
+            "type": "integer",
+            "description": "",
+            "default": 1
+        },
+        "nterm": {
+            "type": "integer",
+            "description": "",
+            "default": 1
+        },
+        "density": {
+            "type": "integer",
+            "description": "",
+            "default": 10
+        },
+        "radius": {
+            "type": "integer",
+            "description": "",
+            "default": 0
+        },
+        "occcutoff": {
+            "type": "number",
+            "description": "",
+            "default": 0.01
+        },
+        "h2oocccutoff": {
+            "type": "number",
+            "description": "",
+            "default": 0.66
+        },
+        "h2obcutoff": {
+            "type": "integer",
+            "description": "",
+            "default": 40
+        },
+        "penalty": {
+            "type": "integer",
+            "description": "",
+            "default": 1
+        },
+        "hbregcutoff": {
+            "type": "number",
+            "description": "",
+            "default": 0.6
+        },
+        "hbchargedcut": {
+            "type": "number",
+            "description": "",
+            "default": 0.8
+        },
+        "badbumpcut": {
+            "type": "number",
+            "description": "",
+            "default": 0.4
+        },
+        "metalbump": {
+            "type": "number",
+            "description": "",
+            "default": 0.865
+        },
+        "nonmetalbump": {
+            "type": "number",
+            "description": "",
+            "default": 0.125
+        },
+        "segidmap": {
+            "type": "string",
+            "description": ""
+        },
+        "xplor": {
+            "type": "boolean",
+            "description": "",
+            "default": false
+        },
+        "oldpdb": {
+            "type": "boolean",
+            "description": "",
+            "default": false
+        },
+        "bbmodel": {
+            "type": "boolean",
+            "description": "",
+            "default": false
+        },
+        "nocon": {
+            "type": "boolean",
+            "description": "",
+            "default": false
+        },
+        "limit": {
+            "type": "integer",
+            "description": "",
+            "default": 600
+        },
+        "showscore": {
+            "type": "boolean",
+            "description": "",
+            "default": false
+        },
+        "fix": {
+            "type": "string",
+            "description": ""
+        },
+        "db": {
+            "type": "string",
+            "description": ""
+        },
+        "string": {
+            "type": "string",
+            "description": ""
+        },
+        "quiet": {
+            "type": "boolean",
+            "description": "",
+            "default": true
+        }
+    }
+}

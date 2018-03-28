@@ -1,0 +1,24 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema",
+    "id": "http://liestudio/schemas/descriptors_request.json",
+    "title": "Molecular descriptors input",
+    "description": "Molecular descriptors configuration",
+    "type": "object",
+    "properties": {
+	"structure" : {
+	    "type": "string",
+	    "description": "molecular geometry"
+	},
+	"mol_format": {
+	    "type": "string",
+	    "description": "format use to represent the molecular geometry",
+	    "enum": ["pdb", "mol2"]
+	},
+	"toolkit": {
+	    "type": "string",
+	    "description": "Molecular toolkit use",
+	    "default": "pybel"
+	}
+    },
+    "required": ["structure", "mol_format"]
+}

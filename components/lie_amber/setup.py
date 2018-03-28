@@ -1,9 +1,5 @@
-#! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# package: lie_amber
-# file: setup.py
-#
 # Part of ‘lie_amber’, a package providing an interface to the AmberTools
 # software suite http://ambermd.org.
 #
@@ -21,31 +17,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from setuptools import setup, find_packages
+from setuptools import (setup, find_packages)
 
 distribution_name = 'lie_amber'
 
 setup(
     name=distribution_name,
-    version=0.1,
-    description='LIEStudio component provinding an interface to the Amber Tools software suite',
-    author='Marc van Dijk, VU University, Amsterdam, The Netherlands',
-    author_email='m4.van.dijk@vu.nl',
-    url='https://github.com/NLeSC/LIEStudio',
+    version='0.2.0',
+    description='MDStudio component provinding an interface to the Amber Tools software suite',
+    author="""
+    Marc van Dijk - VU University - Amsterdam
+    Paul Visscher - Zefiros Software (www.zefiros.eu)
+    Felipe Zapata - eScience Center (https://www.esciencecenter.nl/)""",
+    author_email=['m4.van.dijk@vu.nl', 'f.zapata@esciencecenter.nl'],
+    url='https://github.com/MD-Studio/MDStudio',
     license='Apache Software License 2.0',
-    keywords='LIEStudio AmberTools Amber',
+    keywords='MDStudio AmberTools Amber',
     platforms=['Any'],
     packages=find_packages(),
-    package_data={'': ['*.json']},
     py_modules=[distribution_name],
     include_package_data=True,
-    install_requires=['executor', 'jsonschema'],
     zip_safe=True,
-    entry_points={
-        'autobahn.twisted.wamplet': [
-            'wamp_services = lie_amber.wamp_services:make'
-        ],
-    },
     classifiers=[
         'Development Status :: 3 - Alpha',
         'License :: OSI Approved :: Apache Software License',
@@ -54,4 +46,7 @@ setup(
         'Operating System :: OS Independent',
         'Intended Audience :: Science/Research',
         ],
+    scripts=[
+        'scripts/acpype.py'
+    ]
 )

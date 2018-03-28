@@ -9,6 +9,14 @@ settings:
         owner: mdadmin
         components:
           - echo
+          - lie_amber
+          - lie_haddock
+          - lie_md
+          - lie_plants_dockings
+          - lie_propka
+          - lie_pylie
+          - lie_structures
+          
     clients:
       - username: mdadmin
         clientId: Ek@la7\xOhex;5;I$)G'+W<}DL|8h<

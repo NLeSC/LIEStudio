@@ -1,0 +1,19 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema",
+    "id": "http://mdstudio/schemas/removed_residues_response.json",
+    "title": "Remove residues output",
+    "description": "Output description after removing residues",
+    "type": "object",
+    "properties": {
+	"status": {
+	    "type": "string",
+	    "description": "Job final status",
+	    "enum": ["failed", "completed"]
+	},
+	"mol": {
+	    "type": "string",
+	    "description": "Resulting molecule"
+	}
+    },
+    "required": ["status", "mol"]
+}

@@ -31,7 +31,7 @@ setup(
     description='LIEStudio component wrapping API access to the Automatic Topology Builder server',
     author='Marc van Dijk, VU University, Amsterdam, The Netherlands',
     author_email='m4.van.dijk@vu.nl',
-    url='https://github.com/NLeSC/LIEStudio',
+    url='https://github.com/MD-Studio/MDStudio',
     license='Apache Software License 2.0',
     keywords='LIEStudio ATB topology molecular force fields',
     platforms=['Any'],

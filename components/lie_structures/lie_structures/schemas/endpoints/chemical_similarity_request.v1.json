@@ -1,0 +1,44 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema",
+    "title": "Chemical similarity input",
+    "id": "http://liestudio/schemas/similarity_request.json",
+    "description": "Calculate the chemical similarity between structures",
+    "type": "object",
+    "properties": {
+	"test_set" : {
+	    "type": "array", 
+	    "description": " test set to calculate similarity"
+	},
+	"reference_set": {
+	    "type": "array",
+	    "description": "set to calculate similarity against"
+	},
+	"mol_format": {
+	    "type": "string",
+	    "description": "format use to represent the molecular geometry",
+	    "default": "mol2",
+	    "Enum": ["pdb", "mol2"]
+	},
+	"fp_format": {
+	    "type": "string",
+	    "description": "fingerprint format",
+	    "default": "maccs"
+	},
+	"metric": {
+	    "type": "string",
+	    "description": "similarity metric",
+	    "default": "tanimoto"
+	},
+	"toolkit": {
+	    "type": "string",
+	    "description": "Molecular toolkit use",
+	    "default": "pybel"
+	},
+	"ci_cutoff": {
+	    "type": "number",
+	    "description": "AP CI cutoff value"
+	}
+	
+    },
+    "required": ["test_set", "reference_set", "mol_format", "ci_cutoff"]
+}

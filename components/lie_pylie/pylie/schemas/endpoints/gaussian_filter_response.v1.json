@@ -1,0 +1,20 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://mdstudio/schemas/gaussian_filter_response.json",
+    "title": "Gaussian Filter output",
+    "description": "Gaussian Filter",
+    "type": "object",
+    "properties": {
+	"status": {
+	    "type": "string",
+	    "description": "Job final status",
+	    "enum": ["failed", "completed"]
+	},
+	"gauss_filter": {
+	    "type": ["string", "null"],
+	    "description": "Result Dataframe",
+	    "default": ""
+	} 
+   },
+    "required": ["status", "gauss_filter"]
+}

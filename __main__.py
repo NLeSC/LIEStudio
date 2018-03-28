@@ -1,13 +1,8 @@
 from collections import OrderedDict
-from datetime import datetime
 from tempfile import NamedTemporaryFile
 
-import sys
 import argparse
 
-import copy
-
-import pytz
 import twisted
 import yaml
 import json

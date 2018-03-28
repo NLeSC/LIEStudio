@@ -1,0 +1,28 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://liestudio/schemas/lie_average_request.json",
+    "title"::"Calculated lie average",
+    "description":"Calculated lie average input",
+    "type": "object",
+    "properties": {
+	"mdframes": {
+	    "type": "string",
+	    "description": "molecular dynamics Dataframe"
+	},
+        "inlierFilterMethod": {
+            "type": "string",
+            "description": "Filter method for selecting inlier coulomb/VdW energy pairs",
+            "default": "pair",
+            "enum": [
+                "single",
+                "pair",
+                "global"
+            ]
+        },
+	"workdir": {
+	    "type": "string",
+	    "default": "."
+	}
+    },
+    "required": ["dataframes"]
+}

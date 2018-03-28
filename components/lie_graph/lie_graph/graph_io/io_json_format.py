@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
 
 """
-Import/Export files in JSON compliant format
+file: io_json_format.py
+
+Functions for reading and writing graph files in a lie_graph JSON format.
+
+This is a propitiatory format in which the graph meta-data, the nodes, edges
+and their data dictionaries are stored in JSON format.
 """
 
 import json
@@ -9,72 +14,36 @@ import json
 import logging as logger
 
 from .. import __version__
-from ..graph import Graph
-from ..graph_axis_class import GraphAxis
-from .io_helpers import _check_lie_graph_version, _open_anything
+from lie_graph.graph import Graph
+from lie_graph.graph_axis.graph_axis_class import GraphAxis
+from lie_graph.graph_io.io_helpers import check_lie_graph_version, open_anything
 
 
-BASICTYPES = (int, float, bool, long, str, unicode)
-
-
-def read_dict(dict_format):
-    """
-    Read graph in Python dictionary format
-
-    :param dict_format: graph encoded as Python dictionary
-    :type dict_format:  :py:dict
-
-    :return:            Graph object
-    :rtype:             Graph or GraphAxis object
-    """
-    err = TypeError(
-        "Graph representation not a dictionary, got: {0}".format(
-            type(dict_format)))
-    assert isinstance(dict_format, dict), err
-
-    # Determine graph class to use
-    graph_object = Graph()
-    if dict_format['graph'].get('root') is not None:
-        graph_object = GraphAxis()
-
-    # Init graph meta-data attributes
-    for key, value in dict_format['graph'].items():
-        setattr(graph_object, key, value)
-
-    # Init graph nodes
-    for node_key, node_value in dict_format['nodes'].items():
-
-        # JSON objects don't accept integers as dictionary keys
-        # If graph.auto_nid equals True, course node_key to integer
-        if graph_object.auto_nid:
-            node_key = int(node_key)
-
-        graph_object.nodes[node_key] = node_value
-
-    # Init graph edges
-    for edge_key, edge_value in dict_format['edges'].items():
-        edge_value = tuple(edge_value)
-        graph_object.edges[edge_value] = dict_format['edge_attr'].get(edge_key, {})
-
-    # Reset graph adjacency
-    graph_object._set_adjacency()
-
-    return graph_object
-
-
-def read_json(json_format):
+def read_json(json_format, graph=None):
     """
     Read JSON graph format
 
+    This is a propitiatory format in which the graph meta-data, the nodes,
+    edges and their data dictionaries are stored in JSON format.
+
+    Format description. Primary key/value pairs:
+    * graph: Graph class meta-data. Serializes all class attributes of type
+             int, float, bool, long, str or unicode.
+    * nodes: Graph node identifiers (keys) and attributes (values)
+    * edges: Graph enumerated edge identifiers
+    * edge_attr: Graph edge attributes
+
     :param json_format: JSON encoded graph data to parse
     :type json_format:  :py:str
+    :param graph:       Graph object to import TGF data in
+    :type graph:        :lie_graph:Graph
 
     :return:            Graph object
     :rtype:             Graph or GraphAxis object
     """
 
     # Try parsing the string using default Python json parser
-    json_format = _open_anything(json_format)
+    json_format = open_anything(json_format)
     try:
         parsed = json.load(json_format)
     except IOError:
@@ -82,19 +51,51 @@ def read_json(json_format):
         return
 
     # Check lie_graph version and format validity
-    if not _check_lie_graph_version(parsed.get('lie_graph_version')):
+    if not check_lie_graph_version(parsed.get('lie_graph_version')):
         return
     keywords = ['graph', 'nodes', 'edges', 'edge_attr']
     if not set(keywords).issubset(set(parsed.keys())):
         logger.error('JSON format does not contain required graph data')
         return
 
-    return read_dict(parsed)
+    # Determine graph class to use
+    if not isinstance(graph, Graph):
+        if parsed['graph'].get('root') is not None:
+            graph = GraphAxis()
+        else:
+            graph = Graph()
+
+    # Init graph meta-data attributes
+    for key, value in parsed['graph'].items():
+        setattr(graph, key, value)
+
+    # Init graph nodes
+    for node_key, node_value in parsed['nodes'].items():
+
+        # JSON objects don't accept integers as dictionary keys
+        # If graph.auto_nid equals True, course node_key to integer
+        if graph.auto_nid:
+            node_key = int(node_key)
+
+        graph.nodes[node_key] = node_value
+
+    # Init graph edges
+    for edge_key, edge_value in parsed['edges'].items():
+        edge_value = tuple(edge_value)
+        graph.edges[edge_value] = parsed['edge_attr'].get(edge_key, {})
+
+    # Reset graph adjacency
+    graph._set_adjacency()
+
+    return graph
 
 
 def write_json(graph, indent=2, encoding="utf-8", **kwargs):
     """
     Write JSON graph format
+
+    This is a propitiatory format in which the graph meta-data, the nodes,
+    edges and their data dictionaries are stored in JSON format.
 
     Format description. Primary key/value pairs:
     * graph: Graph class meta-data. Serializes all class attributes of type
@@ -113,6 +114,7 @@ def write_json(graph, indent=2, encoding="utf-8", **kwargs):
     :type kwargs:    :py:dic
 
     :return:         JSON encoded graph dictionary
+    :rtype:          :py:str
     """
 
     # Init JSON format envelope
@@ -131,19 +133,18 @@ def write_json(graph, indent=2, encoding="utf-8", **kwargs):
 
     # Store graph meta data
     for key, value in graph.__dict__.items():
-        if not key.startswith('_') and type(value) in BASICTYPES:
+        if not key.startswith('_') and isinstance(value, (int, float, bool, long, str, unicode)):
             json_format['graph'][key] = value
 
     # Update nodes with graph node attributes
-    json_format['nodes'].update(graph.nodes.dict())
+    json_format['nodes'].update(graph.nodes.to_dict())
 
     # JSON cannot encode dictionaries with tuple as keys
     # Split the two up
-    edgedata = graph.edges.dict()
+    edgedata = graph.edges.to_dict()
     for i, edge in enumerate(edgedata):
         json_format['edges'][i] = edge
         if edgedata[edge]:
             json_format['edge_attr'][i] = edgedata[edge]
 
-    logger.info('Encode graph in JSON format')
     return json.dumps(json_format, indent=indent, encoding=encoding)

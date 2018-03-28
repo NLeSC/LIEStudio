@@ -5,136 +5,75 @@ file: wamp_services.py
 
 WAMP service methods the module exposes.
 """
-
-import json
-import shutil
-import json
-from pprint import pprint
-
-from autobahn import wamp
-from autobahn.wamp.types import RegisterOptions
-from twisted.internet.defer import inlineCallbacks, returnValue
-
+from lie_md.cerise_interface import (
+    call_cerise_gromit, create_cerise_config)
+from lie_md.md_config import set_gromacs_input
 from mdstudio.api.endpoint import endpoint
+from mdstudio.deferred.chainable import chainable
 from mdstudio.component.session import ComponentSession
-from lie_md.gromacs_gromit import gromit_cmd
-from lie_md.settings import SETTINGS, GROMACS_LIE_SCHEMA
+from mdstudio.deferred.return_value import return_value
+from os.path import join
+import json
 
-gromacs_schema = json.load(open(GROMACS_LIE_SCHEMA))
 
 class MDWampApi(ComponentSession):
     """
-    MD WAMP methods.
+    Molecular dynamics WAMP methods.
     """
-
-    def pre_init(self):
-        self.component_config.static.vendor = 'mdgroup'
-        self.component_config.static.component = 'md'
-
     def authorize_request(self, uri, claims):
         return True
 
-    @wamp.register(u'mdgroup.md.endpoint.gromacs.liemd')
-    def run_gromacs_liemd(
-            self, session={}, protein_file=None, ligand_file=None,
-            topology_file=None, **kwargs):
+    @endpoint('liemd', 'liemd_request', 'liemd_response')
+    @chainable
+    def run_gromacs_liemd(self, request, claims):
+        """
+        First it calls gromit to compute the Ligand-solute energies, then
+        calls gromit to calculate the protein-ligand energies.
 
-        # Retrieve the WAMP session information
-        session = WAMPTaskMetaData(metadata=session).dict()
+        The Cerise-client infrastructure is used to perform the computations
+        in a remote server, see:
+        http://cerise-client.readthedocs.io/en/master/index.html
 
-        # Load GROMACS configuration and update
-        gromacs_config = self.package_config.dict()
+        This function expects the following keywords files to call gromit:
+            * cerise_file
+            * protein_file (optional)
+            * protein_top
+            * ligand_file
+            * topology_file
+            * reSidues
 
-        # Create workdir and save file
-        workdir = os.path.join(kwargs.get('workdir', tempfile.gettempdir()))
-        if not os.path.isdir(workdir):
-            os.mkdir(workdir)
-        os.chdir(workdir)
+        The cerise_file is the path to the file containing the configuration
+        information required to start a Cerise service.
 
-        # Store protein file if available
-        if protein_file:
-            protdsc = os.path.join(workdir, 'protein.pdb')
-            with open(protdsc, 'w') as inp:
-                inp.write(protein_file)
+        Further include files (e.g. *itp files) can be included as a list:
+        include=[atom_types.itp, another_itp.itp]
 
-        # Store ligand file if available
-        if ligand_file:
-            ligdsc = os.path.join(workdir, 'ligand.pdb')
-            try:
-                if os.path.isfile(ligand_file):
-                    shutil.copy(ligand_file, ligdsc)
-            except:
-                with open(ligdsc, 'w') as inp:
-                    inp.write(ligand_file)
+        To perform the energy decomposition a list of the numerical residues
+        identifiers is expected, for example:
+        residues=[1, 5, 7, 8]
 
-        # Save ligand topology files
-        if topology_file:
-            topdsc = os.path.join(workdir, 'ligtop.itp')
-            try:
-                if os.path.isfile(
-                        os.path.join(topology_file, 'input_GMX.itp')):
-                    shutil.copy(
-                        os.path.join(topology_file, 'input_GMX.itp'), topdsc)
-            except:        
-                with open(topdsc, 'w') as inp:
-                    inp.write(topology_file)
+        Note: the protein_file arguments is optional if you do not provide it
+        the method will perform a SOLVENT LIGAND MD if you provide the
+        `protein_file` it will perform a PROTEIN-LIGAND MD.
+        """
+        task_id = self.component_config.session.session_id
+        request.update({"task_id": task_id})
+        self.log.info("starting liemd task_id:{}".format(task_id))
 
-        # Copy script files to the working directory
-        for script in ('getEnergies.py', 'gmx45md.sh'):
-            src = os.path.join(__rootpath__, 'scripts/{0}'.format(script))
-            dst = os.path.join(workdir, script)
-            shutil.copy(src, dst)
+        # Load GROMACS configuration
+        gromacs_config = set_gromacs_input(request)
 
-        # Fix topology ligand
-        itpOut = 'ligand.itp'
-        results = correctItp(topdsc, itpOut, posre=True)
+        # Load Cerise configuration
+        cerise_config = create_cerise_config(request)
 
-        # Prepaire simulation
-        gromacs_config['charge'] = results['charge']
-        gmxRun = gromit_cmd(gromacs_config)
+        with open(join(request['workdir'], "cerise.json"), "w") as f:
+            json.dump(cerise_config, f)
 
-        if protein_file:
-            gmxRun += '-f {0} '.format(os.path.basename(protdsc))
+        # Run the MD and retrieve the energies
+        output = yield call_cerise_gromit(
+            gromacs_config, cerise_config, self.db)
 
-        if ligand_file:
-            gmxRun += '-l {0},{1} '.format(
-                os.path.basename(ligdsc), os.path.basename(results['itp']))
+        status = 'failed' if output is None else 'completed'
+        # return {'status': status, 'output': output}
 
-        # Prepaire post analysis (energy extraction)
-        GMXRC = 'mock_path_to_gmxrc'
-        eneRun = 'python getEnergies.py -gmxrc {0} -ene -o ligand.ene'.format(GMXRC)
-
-        # write executable
-        with open('run_md.sh', 'w') as outFile:
-            outFile.write("{0}\n".format(gmxRun))
-            outFile.write("{0}\n".format(eneRun))
-
-        session['status'] = 'completed'
-
-        return {'session': session, 'output': 'nothing'}
-
-
-def make(config):
-    """
-    Component factory
-
-    This component factory creates instances of the application component
-    to run.
-
-    The function will get called either during development using an
-    ApplicationRunner, or as a plugin hosted in a WAMPlet container such as
-    a Crossbar.io worker.
-    The LieApplicationSession class is initiated with an instance of the
-    ComponentConfig class by default but any class specific keyword arguments
-    can be consument as well to populate the class session_config and
-    package_config dictionaries.
-
-    :param config: Autobahn ComponentConfig object
-    """
-
-    if config:
-        return MDWampApi(config, package_config=SETTINGS)
-    else:
-        # if no config given, return a description of this WAMPlet ..
-        return {'label': 'LIEStudio Molecular Dynamics WAMPlet',
-                'description': 'WAMPlet proving LIEStudio molecular dynamics endpoints'}
+        return_value({'status': status, 'output': {"random": 42}})

@@ -1,57 +1,20 @@
 # -*- coding: utf-8 -*-
 
 """
-package:  lie_db
+MDStudio command line interface (CLI) component
 
-LIEStudio database component
+Call MDStudio microservice methods from the UNIX command line
 """
 
 import os
 
-__module__ = 'lie_db'
+__module__ = 'lie_cli'
 __docformat__ = 'restructuredtext'
-__version__ = '{major:d}.{minor:d}'.format(major=0, minor=1)
+__version__ = '{major:d}.{minor:d}'.format(major=0, minor=2)
 __author__ = 'Marc van Dijk'
 __status__ = 'pre-release beta1'
 __date__ = '15 april 2016'
 __licence__ = 'Apache Software License 2.0'
-__url__ = 'https://github.com/NLeSC/LIEStudio'
+__url__ = 'https://github.com/MD-Studio/MDStudio'
 __copyright__ = "Copyright (c) VU University, Amsterdam"
 __rootpath__ = os.path.dirname(__file__)
-
-# Import settings
-# from .wamp_services import CLIWampApi
-
-# Define component public API
-# wampapi  = CLIWampApi
-
-import time
-
-from twisted.internet import reactor
-from autobahn import wamp
-from queue import Queue, Empty
-
-from mdstudio.runner import main
-
-from .wamp_services import CLIWampApi
-
-session = CLIWampApi(wamp.ComponentConfig(u'mdstudio'))
-
-welcome = """
-LIEstudio command line component
-
-This component provides user access via the CLI.
-A connected session is available in the "session" variable.
-
-As an example, you can perform calls on a WAMP uri using the following command:
-    
-    session.call('mdstudio.some.uri')
-"""
-
-def connect():
-    main(session, start_reactor=False)
-    return session
-
-def stop():
-    session.leave()
-    exit()

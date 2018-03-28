@@ -1,114 +1,91 @@
 # -*- coding: utf-8 -*-
 
-"""
-file: wamp_services.py
-
-WAMP service methods the module exposes.
-"""
-
 import os
-import json
-import jsonschema
-import tempfile
 import shutil
 
-from autobahn import wamp
-from mdstudio.application_session import BaseApplicationSession
-
-from lie_amber.settings import SETTINGS, AMBER_SCHEMA
-from lie_amber.ambertools import amber_acpype, amber_reduce
-from lie_system import LieApplicationSession, WAMPTaskMetaData
-
-amber_schema = json.load(open(AMBER_SCHEMA))
+from mdstudio.api.endpoint import endpoint
+from mdstudio.component.session import ComponentSession
+from lie_amber.ambertools import (amber_acpype, amber_reduce)
 
 
-class AmberWampApi(BaseApplicationSession):
+class AmberWampApi(ComponentSession):
     """
     AmberTools WAMP methods.
     """
-    
-    require_config = ['system']
-    
-    @wamp.register(u'liestudio.amber.acpype')
-    def run_amber_acpype(self, structure=None, session=None, **kwargs):
-        
-        # Retrieve the WAMP session information
-        session = WAMPTaskMetaData(metadata=session).dict()
-        
+    def authorize_request(self, uri, claims):
+        return True
+
+    @endpoint('acpype', 'acpype-request', 'acpype-response')
+    def run_amber_acpype(self, request, claims):
+        """
+        Call amber acpype package using a molecular `structure`.
+        See the `schemas/endpoints/acpype-request.v1.json for
+        details.
+        """
         # Load ACPYPE configuration and update
-        acpype_config = self.package_config.get('amber_acpype').dict()
-        
-        # Validate the configuration
-        jsonschema.validate(amber_schema, acpype_config)
-        
-        # Create workdir and save file
-        workdir = os.path.join(kwargs.get('workdir', tempfile.gettempdir()))
-        tmpfile = os.path.join(workdir,'input.mol2')
-        if not os.path.isdir(workdir):
-            os.mkdir(workdir)
-        with open(tmpfile, 'w') as inp:
-            inp.write(structure)
-        
-        # Run ACPYPE
-        output = amber_acpype(tmpfile, workdir=workdir, **acpype_config)
-        if not output:
-            session['status'] = 'failed'
-        else:
-            session['status'] = 'completed'
-        
-        return {'session':session, 'path':output}
-    
-    @wamp.register(u'liestudio.amber.reduce')
-    def run_amber_reduce(self, structure=None, session=None, **kwargs):
-        
-        # Retrieve the WAMP session information
-        session = WAMPTaskMetaData(metadata=session).dict()
-        
-        # Load ACPYPE configuration and update
-        amber_reduce_config = self.package_config.get('amber_reduce').dict()
-        
-        # Validate the configuration
-        jsonschema.validate(amber_schema, amber_reduce_config)
-        
-        # Create workdir and save file
-        workdir = os.path.join(kwargs.get('workdir', tempfile.gettempdir()))
-        tmpfile = os.path.join(workdir,'input.mol2')
-        if not os.path.isdir(workdir):
-            os.mkdir(workdir)
-        with open(tmpfile, 'w') as inp:
-            inp.write(structure)
-        
-        # Run ACPYPE
-        output = amber_reduce(tmpfile, **amber_reduce_config)
-        if not output:
-            session['status'] = 'failed'
-        else:
-            session['status'] = 'completed'
-        
-        return {'session':session, 'path':output}
-        
-        
-def make(config):
+        acpype_config = get_amber_config(request)
+
+        return call_amber_package(request, acpype_config, amber_acpype)
+
+    @endpoint('reduce', 'reduce-request', 'reduce-response')
+    def run_amber_reduce(self, request, claims):
+        """
+        Call amber reduce using a  a molecular `structure`.
+        See the the `schemas/endpoints/reduce-request.v1.json for
+        details.
+        """
+        reduce_config = get_amber_config(request)
+
+        return call_amber_package(request, reduce_config, amber_reduce)
+
+
+def get_amber_config(request):
     """
-    Component factory
-  
-    This component factory creates instances of the application component
-    to run.
-    
-    The function will get called either during development using an 
-    ApplicationRunner, or as a plugin hosted in a WAMPlet container such as
-    a Crossbar.io worker.
-    The BaseApplicationSession class is initiated with an instance of the
-    ComponentConfig class by default but any class specific keyword arguments
-    can be consument as well to populate the class session_config and
-    package_config dictionaries.
-    
-    :param config: Autobahn ComponentConfig object
+    Remove the keywords not related to amber
     """
-    
-    if config:
-        return AmberWampApi(config, package_config=SETTINGS)
+    d = request.copy()
+    keys = ['workdir', 'structure', 'from_file']
+
+    for k in keys:
+        if k in d:
+            d.pop(k)
+
+    return d
+
+
+def call_amber_package(request, config, function):
+    """
+    Create temporate files and invoke the `function` using `config`.
+    """
+    # Create workdir and save file
+    workdir = request['workdir']
+    create_dir(workdir)
+    tmp_file = create_temp_file(
+        request['structure'], request['from_file'], workdir)
+
+    # Run amber function
+    output = function(tmp_file, config, workdir)
+
+    status = 'failed' if output is None else 'completed'
+
+    return {'status': status, 'output': output}
+
+
+def copy_structure(structure, from_file, tmp_file):
+    if from_file and os.path.exists(structure):
+        shutil.copyfile(structure, tmp_file)
     else:
-        # if no config given, return a description of this WAMPlet ..
-        return {'label': 'LIEStudio AmberTools interface WAMPlet',
-                'description': 'WAMPlet providing LIEStudio connectivity to the AmberTools software suite'}
+        with open(tmp_file, 'w') as inp:
+            inp.write(structure)
+
+
+def create_dir(folder):
+    if not os.path.isdir(folder):
+        os.mkdir(folder)
+
+
+def create_temp_file(structure, from_file, workdir):
+    tmp_file = os.path.join(workdir, 'input.mol2')
+    copy_structure(structure, from_file, tmp_file)
+
+    return tmp_file

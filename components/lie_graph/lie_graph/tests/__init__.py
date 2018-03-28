@@ -28,5 +28,5 @@ def module_test_suite():
     
     testpath = os.path.join(os.path.dirname(__file__), 'module')
     loader = unittest2.TestLoader()
-    suite = loader.discover(testpath, pattern='graph_*.py')
+    suite = loader.discover(testpath, pattern='module_*.py')
     return suite

@@ -8,16 +8,14 @@ import json
 import pickle
 from operator import itemgetter
 from os import getpid
-from copy import deepcopy
 import sys
 from inspect import stack
 from requests import post
 from tempfile import TemporaryFile
 from typing import Any, List, Dict, Callable, Optional, Union, Tuple
-from functools import reduce
 from os.path import join
 from socket import timeout
-from logging import getLogger, Formatter, FileHandler, StreamHandler, DEBUG, INFO, WARNING, ERROR, Logger
+from logging import getLogger, Formatter, StreamHandler, DEBUG, INFO, WARNING, ERROR, Logger
 from functools import reduce
 
 MISSING_VALUE = Exception('Missing value')

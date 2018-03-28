@@ -1,0 +1,20 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://liestudio/schemas/concat_output.json",
+    "title": "Concat dataframes output",
+    "description": "Concatenate dataframes",
+    "type": "object",
+    "properties": {
+	"status": {
+	    "type": "string",
+	    "description": "Job final status",
+	    "enum": ["failed", "completed"]
+	},
+	"concat_mdframe": {
+	    "type": ["string", "null"],
+	    "description": "path to the resulting dataframe"
+	}
+    },
+    "required": ["status", "concat_mdframe"]
+  }
+

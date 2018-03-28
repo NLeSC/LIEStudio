@@ -1,0 +1,18 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema",
+    "title": "Amber reduce output",
+    "description": "Amber reduce output",
+    "type": "object",
+    "properties": {
+	"status": {
+	    "type": "string",
+	    "description": "Amber reduce final status",
+	    "enum": ["failed", "completed"]
+	},
+	"output": {
+	    "type": "object",
+	    "description": "Dictionary containing the Amber reduce output files"
+	}
+    },
+    "required": ["status", "output"]
+}

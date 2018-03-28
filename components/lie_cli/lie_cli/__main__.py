@@ -1,11 +1,5 @@
-from twisted.conch.stdio import ConsoleManhole, runWithProtocol as console
-
-class ConsoleWrapper(ConsoleManhole):
-    def connectionMade(self):
-        super(ConsoleWrapper, self).connectionMade()
-        self.interpreter.push(b'from lie_cli import *')
-        self.interpreter.push(b'session = connect()')
-        self.lineReceived(b'print("welcome")')
+from mdstudio.runner import main
+from lie_cli.wamp_services import CliWampApi
 
 if __name__ == '__main__':
-    console(ConsoleWrapper)
+    main(CliWampApi,  auto_reconnect=False)

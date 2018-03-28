@@ -1,0 +1,20 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://liestudio/schemas/lie_average_output.json",
+    "title"::"Calculated lie average",
+    "description":"Calculated lie average ouput",
+    "type": "object",
+    "properties": {
+	"status": {
+	    "type": "string",
+	    "description": "Job final status",
+	    "enum": ["failed", "completed"]
+	},
+	"averaged": {
+	    "type": "string",
+	    "description": "path to the resulting dataframe"
+	}
+    },
+    "required": ["status", "averaged"]
+    
+}

@@ -1,14 +1,19 @@
 # -*- coding: utf-8 -*-
 
-import os
 import numpy
 import itertools
+import matplotlib
 
 from twisted.logger import Logger
 from scipy.spatial.distance import squareform
 from scipy.cluster.hierarchy import linkage, fcluster, dendrogram
 
-#import matplotlib.pyplot as plt
+# Init maplotlib
+from matplotlib import style
+matplotlib.use('Agg')  # Use Agg for non-interactive plotting
+style.use('ggplot')  # Because of AttributeError: Unknown property color_cycle bug in Pandas 1.7.1 with Matplotlib 1.5.0
+
+import matplotlib.pyplot as plt
 
 
 def coords_from_mol2(mol2_files):
@@ -34,7 +39,7 @@ def coords_from_mol2(mol2_files):
                     break
                 elif read:
                     line = line.split()
-                    coords.append(map(float, line[2:5]))
+                    coords.append(list(map(float, line[2:5])))
             if coords:
                 sets.append(coords)
 
@@ -171,13 +176,16 @@ class ClusterStructures(object):
         self.labels = labels or range(len(labels))
 
         # All xyz coordinate sets need to be of type numpy.ndarray
-        assert all([isinstance(coords, numpy.ndarray) for coords in self.xyz]), 'Structure coordinates need to be of type numpy.ndarray'
+        cond = all([isinstance(coords, numpy.ndarray) for coords in self.xyz])
+        assert cond, 'Structure coordinates need to be of type numpy.ndarray'
 
         # Equality in number and order of atoms for all coordinate sets is assumed
-        assert len(set([coords.size for coords in self.xyz])) == 1, 'Structure coordinates have an unequal number of atoms'
+        cond = len(set([coords.size for coords in self.xyz])) == 1
+        assert cond, 'Structure coordinates have an unequal number of atoms'
 
         # Optional list of labels (e.a. structure id's) need to match coordinate set in length
-        assert len(self.labels) == len(self.xyz), 'Number if labels is not matching number of coordinate sets'
+        cond = len(self.labels) == len(self.xyz)
+        assert cond, 'Number if labels is not matching number of coordinate sets'
 
         self._condensed_distance_matrix = self._build_pdist()
         self._clusters = []
@@ -216,7 +224,8 @@ class ClusterStructures(object):
 
         _metric_func = globals().get(self.metric)
         if not _metric_func:
-            raise LookupError('{0} class does not know about "{1}" pdist metric'.format(type(self).__name__, self.metric))
+            raise LookupError(
+                '{0} class does not know about "{1}" pdist metric'.format(type(self).__name__, self.metric))
 
         dst = []
         for pair in itertools.combinations(self.xyz, 2):
@@ -247,8 +256,9 @@ class ClusterStructures(object):
         :rtype:  :py:class:`dict`
         """
 
-        return dict([(self._clusters_filtered[sid]['cluster'], sid) for sid in self._clusters_filtered
-                     if self._clusters_filtered[sid].get('mean', False)])
+        return {self._clusters_filtered[sid]['cluster']: sid for sid
+                in self._clusters_filtered
+                if self._clusters_filtered[sid].get('mean', False)}
 
     @property
     def cluster_count(self):
@@ -338,7 +348,7 @@ class ClusterStructures(object):
                 else:
                     a = sqmatr[cl[0]]
                     a = a[:, cl[0]]
-                    m = numpy.mean(numpy.hstack(a[i][:i] for i in xrange(a.shape[0])))
+                    m = numpy.mean(numpy.hstack(a[i][:i] for i in range(a.shape[0])))
                     x = (numpy.abs(a - m)).argmin()
                     lc = numpy.where(a == a.flat[x])[0]
 
@@ -354,14 +364,3 @@ class ClusterStructures(object):
             len(self.xyz), self.metric, self.method, self.criterion, self.t, min_cluster_count))
         self.logging.info('Resolved {0} clusters with a coverage of {1}%'.format(self.cluster_count, self.coverage * 100))
         return self._clusters_filtered
-
-
-if __name__ == '__main__':
-
-    import glob
-    s = glob.glob('/Users/mvdijk/Documents/WorkProjects/liestudio-master/liestudio/components/lie_docking-0.1/tests/cluster/*.mol2')
-    xyz = coords_from_mol2(s)
-    c = ClusterStructures(xyz, labels=[os.path.basename(n).replace('_entry_00001_conf_', 'lig_').split('.')[0] for n in s])
-    c.cluster(4, method='single', min_cluster_count=2)
-
-    print(c)

@@ -1,0 +1,109 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://mdstudio/schemas/propka_request.json",
+    "title": "propka input",
+    "description": "predicts the pKa values of ionizable groups in proteins",
+    "type": "object",
+    "properties": {
+	"pdb": {
+	    "type": "string",
+	    "description": "Sructure in RCSB PDB format"
+	},
+	"reference": {
+	    "type": "string",
+	    "description": "setting which reference to use for stability calculations.",
+	    "default": "neutral",
+	    "enum": ["neutral", "low-pH"]
+	},
+	"chains": {
+	    "type": "string",
+	    "description": "creating the protein with only a specified chain. Specify ' ' for chains without ID [all]"
+	},
+	"titrate_only": {
+	    "type": "string",
+	    "description": "Treat only the specified residues as titratable. Value should be a comma-separated list of 'chain:resnum' values; for example: 'A:10,A:11'"
+	},
+	"thermophiles": {
+	    "type": "string",
+	    "description": "defining a thermophile filename; usually used in 'alignment-mutations'"
+	},
+	"alignment": {
+	    "type": "string",
+	    "description": "alignment file connecting <filename> and <thermophile> [<thermophile>.pir]"
+	},
+	"mutation": {
+	    "type": "string",
+	    "description": "specifying mutation labels which are used to modify the input structure according to, e.g. N25R/N181D"
+	},
+	"parameters": {
+	    "type": "string",
+	    "description": "set the parameter file"
+	},
+	"ph": {
+	    "type": "number",
+	    "description": "setting pH-value used in e.g. stability calculations",
+	    "default": 7.0
+	},
+	"window": {
+	    "type": "array",
+	    "description": "setting the pH-window to show e.g. stability profiles",
+	    "minItems": 3,
+	    "maxItems": 3,
+	    "minValue": 0.0,
+	    "maxValue": 14.0,
+	    "items": {
+		"type": "number"
+	    },
+	    "default": [0.0, 14.0, 1.0]
+	},
+	"grid": {
+	    "type": "array",
+	    "description": "setting the pH-grid to calculate e.g. stability related properties",
+	    "minItems": 3,
+	    "maxItems": 3,
+	    "minValue": 0.0,
+	    "maxValue": 14.0,
+	    "items": {
+		"type": "number"
+	    },
+	    "default": [0.0, 14.0, 1.0]
+	},
+	"mutator": {
+	    "type": "string",
+	    "description": "setting approach for mutating as filename"
+	},
+	"mutator_options": {
+	    "type": "string",
+	    "description": "setting property for mutator e.g.: type=side-chain"
+	},
+	"display_coupled_residues": {
+	    "type": "boolean",
+	    "description": "Displays alternative pKa values due to coupling of titratable groups",
+	    "default": false
+	},
+	"reuse_ligand_mol2_files": {
+	    "type": "boolean",
+	    "description": "Reuses the ligand mol2 files allowing the user to alter ligand bond orders",
+	    "default": false
+	},
+	"keep_protons": {
+	    "type": "boolean",
+	    "description": "Keep protons in input file",
+	    "default": false
+	},
+	"protonate_all": {
+	    "type": "boolean",
+	    "description": "Protonate all atoms (will not influence pKa calculation)",
+	    "default": false
+	},
+	"from_file": {
+	    "type": "boolean",
+	    "default": "false"
+	},
+	"workdir": {
+	    "type": "string",
+	    "default": "."
+	}
+    },
+    "required": ["pdb"]
+}

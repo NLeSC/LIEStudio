@@ -10,15 +10,19 @@ def node_neighbors(graph, nid):
     """
     Return de neighbor nodes of the node.
 
-    ..  note:: if the current graph is a sub graph view (is_view == True) of
-               the parent graph than only the neighbor nodes represented by
-               the sub graph will be considered.
+    This method is not hierarchical and thus the root node has no effect.
+
+    Directed graphs and/or is_masked behaviour: masked nodes or directed
+    nodes not having an edge from source to node will not be returned.
 
     :param graph: Graph to query
     :type graph:  Graph class instance
     :param nid:   node ID to return neighbors for
     :type nid:    :py:int
     """
+
+    if nid is None:
+        return []
 
     if graph.is_masked:
         nodes = set(graph.nodes.keys())
@@ -130,7 +134,7 @@ def dijkstra_shortest_path(graph, start, goal, weight='weight'):
     :rtype:           :py:list
     """
 
-    adjacency = graph.adjacency()
+    adj = graph.adjacency()
 
     # Flatten linked list of form [0,[1,[2,[]]]]
     def flatten(linked_list):
@@ -140,17 +144,19 @@ def dijkstra_shortest_path(graph, start, goal, weight='weight'):
 
     q = [(0, start, ())]
     visited = []
-    while True:
+    while len(q):
         (cost1, v1, path) = heapq.heappop(q)
         if v1 not in visited:
             visited.append(v1)
         if v1 == goal:
             return list(flatten(path))[::-1] + [v1]
         path = (v1, path)
-        for v2 in adjacency[v1]:
+        for v2 in adj[v1]:
             if v2 not in visited:
                 cost2 = graph.edges[(v1, v2)].get(weight, 1)
                 heapq.heappush(q, (cost1 + cost2, v2, path))
+
+    return []
 
 
 def brandes_betweenness_centrality(graph, normalized=False, weight='weight'):

@@ -11,16 +11,16 @@ import sys
 import json
 import re
 
-if sys.version_info.major == 3:
-    from urllib.error import HTTPError, URLError
-else:
-    from urllib2 import HTTPError, URLError
-
 from autobahn import wamp
 
 from lie_system import LieApplicationSession, WAMPTaskMetaData
 from lie_atb import ATBServerApi, ATB_Mol
 from lie_atb.settings import *
+
+if sys.version_info.major == 3:
+    from urllib.error import HTTPError, URLError
+else:
+    from urllib2 import HTTPError, URLError
 
 
 class ATBWampApi(LieApplicationSession):
@@ -38,7 +38,7 @@ class ATBWampApi(LieApplicationSession):
             try:
                 error_dict = json.load(error)
                 self.logger.error('ATB server error: {0}'.format(error_dict.get('error_msg')))
-            except BaseException:
+            except Exception:
                 self.logger.error('Unknown ATB server error')
 
         return error_dict
@@ -77,7 +77,7 @@ class ATBWampApi(LieApplicationSession):
                            timeout=self.package_config.atb_api_timeout,
                            debug=self.package_config.atb_api_debug,
                            host=self.package_config.atb_url)
-        api.API_FORMAT=u'json'
+        api.API_FORMAT = u'json'
         return api
 
     @wamp.register(u'liestudio.atb.submit')
@@ -92,10 +92,12 @@ class ATBWampApi(LieApplicationSession):
         :type netcharge:  :py:int
         :param moltype:   the type of molecule. Any in heteromolecule,
                           amino acid, nucleic acid, sugar, lipid, solvent.
-        :type moltyple    :py:str
+        :type moltype     :py:str
         :param public:    either true or false, depending on whether of not
                           you want the submitted molecule to be made public.
         :type public:     bool
+        :param session:   WAMP session dict.
+        :type session:    :py:dict
         """
 
         # Retrieve the WAMP session information
@@ -153,11 +155,13 @@ class ATBWampApi(LieApplicationSession):
         - cif_uniatom:              CIF format
         - cif_uniatom_extended:     CIF format
 
-        :param molid:       ATB server molid
-        :type molid:        int
-        :param ffversion:   ATB supported force field version
-        :type ffversion:    :py:str
-        :param fformat:     ATB supported file format
+        :param molid:     ATB server molid
+        :type molid:      int
+        :param ffversion: ATB supported force field version
+        :type ffversion:  :py:str
+        :param fformat:   ATB supported file format
+        :param session:   WAMP session dict.
+        :type session:    :py:dict
         """
 
         # Retrieve the WAMP session information
@@ -226,6 +230,8 @@ class ATBWampApi(LieApplicationSession):
         :type ffversion:    :py:str
         :param fformat:     ATB supported file format
         :type fformat:      :py:str
+        :param session:     WAMP session dict.
+        :type session:      :py:dict
         """
 
         # Retrieve the WAMP session information
@@ -253,7 +259,8 @@ class ATBWampApi(LieApplicationSession):
         molecule = self._exceute_api_call(api.Molecules.molid, molid=molid)
         filename = None
         if 'workdir' in kwargs:
-            filename = os.path.join(kwargs['workdir'], '{0}.{1}'.format(fformat, SUPPORTED_FILE_EXTENTIONS.get(fformat, 'top')))
+            filename = os.path.join(kwargs['workdir'], '{0}.{1}'.format(fformat,
+                                                                        SUPPORTED_FILE_EXTENTIONS.get(fformat, 'top')))
 
         if molecule and isinstance(molecule, ATB_Mol):
             structure = self._exceute_api_call(molecule.download_file, file=SUPPORTED_TOPOLOGY_FILE_FORMATS[fformat],
@@ -280,6 +287,8 @@ class ATBWampApi(LieApplicationSession):
         :param netcharge:        the net charge of the query molecule ranging
                                  from -5 to 5 or * if unknown.
         :type netcharge:         :py:int
+        :param session:          WAMP session dict.
+        :type session:           :py:dict
         """
 
         # Retrieve the WAMP session information
@@ -349,7 +358,9 @@ class ATBWampApi(LieApplicationSession):
 
         Query values are case insensitive but the attributes (keys) are.
 
-        :param kwargs: any of the accepted query key,value pairs.
+        :param kwargs:  any of the accepted query key,value pairs.
+        :param session: WAMP session dict.
+        :type session:  :py:dict
         """
 
         # Retrieve the WAMP session information
@@ -372,7 +383,6 @@ class ATBWampApi(LieApplicationSession):
             return {'session': session}
 
         # Get molecule directly using ATB molid
-        response = []
         if 'molid' in kwargs:
             response = [self._exceute_api_call(api.Molecules.molid, molid=kwargs['molid'])]
         else:

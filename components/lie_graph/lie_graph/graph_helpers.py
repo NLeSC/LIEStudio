@@ -3,10 +3,10 @@
 import copy
 import logging as logger
 
-from .graph_dict import GraphDict
+from graph_storage_drivers.graph_dict import DictStorage
 
 
-def _adjacency_to_edges(nodes, adjacency, node_source):
+def adjacency_to_edges(nodes, adjacency, node_source):
     """
     Construct edges for nodes based on adjacency.
 
@@ -31,7 +31,7 @@ def _adjacency_to_edges(nodes, adjacency, node_source):
     return edges
 
 
-def _edge_list_to_adjacency(edges):
+def edge_list_to_adjacency(edges):
     """
     Create adjacency dictionary based on a list of edges
 
@@ -39,14 +39,14 @@ def _edge_list_to_adjacency(edges):
     :type edges:  list
     """
 
-    adjacency = dict([(n, []) for n in _edge_list_to_nodes(edges)])
+    adjacency = dict([(n, []) for n in edge_list_to_nodes(edges)])
     for edge in edges:
         adjacency[edge[0]].append(edge[1])
 
     return adjacency
 
 
-def _edge_list_to_nodes(edges):
+def edge_list_to_nodes(edges):
     """
     Create a list of nodes from a list of edges
 
@@ -57,7 +57,7 @@ def _edge_list_to_nodes(edges):
     return list(set(sum(edges, ())))
 
 
-def _make_edges(nodes, directed=True):
+def make_edges(nodes, directed=True):
     """
     Create an edge tuple from two nodes either directed
     (first to second) or undirected (two edges, both ways).
@@ -104,19 +104,65 @@ def renumber_id(graph, start):
     # Update nid if auto_nid
     if graph.auto_nid:
         newnodes = {v: graph.nodes[k] for k, v in mapper.items()}
-        graph.nodes = GraphDict(newnodes)
+        graph.nodes = DictStorage(newnodes)
 
     # Update edges.
     newedges = {}
     for eid, edge in graph.edges.items():
         newedges[(mapper.get(eid[0], eid[0]), mapper.get(eid[1], eid[1]))] = edge
-    graph.edges = GraphDict(newedges)
+    graph.edges = DictStorage(newedges)
 
     # Set new auto_nid counter and update adjacency
     graph._nodeid = start
     graph._set_adjacency()
 
     return graph, mapper
+
+
+def graph_directionality(graph):
+    """
+    Return a graph overall directionality as 'directional', 'undirectional'
+    or 'mixed'
+
+    :param graph: Graph to asses directionality of
+
+    :return:      'directional', 'undirectional' or 'mixed'
+    :rtype:       :py:str
+    """
+
+    edge_directionality = []
+    for node, adj in graph.adjacency.items():
+        edge_directionality.extend([node in graph.adjacency[n] for n in adj])
+
+    if all(edge_directionality):
+        return 'undirectional'
+    elif any(edge_directionality):
+        return 'mixed'
+    else:
+        return 'directional'
+
+
+def graph_to_undirectional(graph):
+    """
+    Convert a directional graph or graph of mixed directionality to a
+    undirectional graph by creating the missing edges and copying the
+    edge data from the directional counterpart
+
+    :param graph: Graph to correct directionality for
+
+    :return:      Undirectional graph
+    """
+
+    for node, adj in graph.adjacency.items():
+        for n in adj:
+            if not node in graph.adjacency[n]:
+                print('Missing edge from {0} to {1}. Create'.format(n, node))
+                graph.add_edge(n, node, attr=graph.edges.get((node, n)))
+
+    # Adjust graph is_directed labels to False
+    graph.is_directed = False
+
+    return graph
 
 
 class GraphException(Exception):

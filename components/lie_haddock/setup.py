@@ -28,19 +28,24 @@ test_requirements = ['unittest2']
 
 setup(
     name=distribution_name,
-    version=0.1,
+    version=0.2,
     description='Access to the HADDOCK webserver for biomolecular docking',
-    author='Marc van Dijk, VU University, Amsterdam, The Netherlands',
-    author_email='m4.van.dijk@vu.nl',
-    url='https://github.com/NLeSC/LIEStudio',
+    author="""
+    Marc van Dijk - VU University - Amsterdam
+    Paul Visscher - Zefiros Software (www.zefiros.eu)
+    Felipe Zapata - eScience Center (https://www.esciencecenter.nl/)""",
+    author_email=['m4.van.dijk@vu.nl', 'f.zapata@esciencecenter.nl'],
+    url='https://github.com/MD-Studio/MDStudio',
     license='Apache Software License 2.0',
-    keywords='LIEStudio HADDOCK docking web server',
+    keywords='MDStudio HADDOCK docking web server',
     platforms=['Any'],
     packages=find_packages(),
     py_modules=[distribution_name],
     test_suite="tests",
-    test_requirements=test_requirements,
-    install_requires=['cmd2'] + test_requirements,
+    install_requires=['cmd2'],
+    extra_requirements={
+        'test': test_requirements
+    },
     include_package_data=True,
     zip_safe=True,
     classifiers=[

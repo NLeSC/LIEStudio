@@ -1,0 +1,31 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://mdstudio/schemas/gaussian_filter_request.json",
+    "title": "Gaussian Filter input",
+    "description": "Gaussian Filter",
+    "type": "object",
+    "properties": {
+	"dataframe": {
+	    "type": "string",
+	    "description": "Path to the dataframe"
+	},
+	"confidence": {
+	    "type": "number",
+	    "default": 0.975
+	},
+	"plot": {
+	    "type": "boolean",
+	    "default": "true"
+	},
+	"fileformat": {
+	    "type": "string",
+	    "default": "csv"
+	},
+	"workdir": {
+	    "type": "string",
+	    "default": "."
+	}
+    },
+    "required": ["dataframe"]
+}
+

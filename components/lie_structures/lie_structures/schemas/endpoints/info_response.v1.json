@@ -1,0 +1,20 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://mdstudio/schemas/structures_schema.json",
+    "title":  "Get attributes input",
+    "description":"Return common structure attributes",
+    "type": "object",
+    "properties": {
+	"status": {
+	    "type": "string",
+	    "description": "Job final status",
+	    "enum": ["failed", "completed"]
+	},
+	"mol": {
+	    "type": ["string", "null"],
+	    "description": "Resulting molecule"
+	}
+    },
+    "required": ["mol", "status"]
+
+    }

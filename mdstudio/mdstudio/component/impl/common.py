@@ -4,12 +4,10 @@ import os
 import re
 from collections import OrderedDict
 from copy import deepcopy
-from hashlib import sha512
 
 import yaml
 from autobahn.twisted.wamp import ApplicationSession
 from autobahn.wamp import PublishOptions, ApplicationError
-from autobahn.wamp.request import Publication
 from twisted.python.failure import Failure
 
 from mdstudio.api.api_result import APIResult

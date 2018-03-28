@@ -1,0 +1,19 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema",
+    "id": "http://mdstudio/schemas/toolkits_response.json",
+    "title": "Chemical similarity input",
+    "description": "Check what bioinformatics package are available",
+    "type": "object",
+    "properties": {
+	"status": {
+	    "type": "string",
+	    "description": "Job final status",
+	    "enum": ["failed", "completed"]	
+	},
+	"toolkits": {
+	    "type": "array",
+	    "description": "Available bioinformatic package"
+	}
+    },
+    "required": ["status", "toolkits"]
+}

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+   <body>
+      <h1>Let's get our favourite structure from the RCSB PDB</h1>
+      <p id="pdb" style="white-space: pre-wrap">Loading...</p>
+      <script>AUTOBAHN_DEBUG = false;</script>
+      <script src="autobahn.min.js"></script>
+
+      <script>
+         console.log("AutobahnJS loaded", autobahn.version);
+
+         function onchallenge (session, method, extra) {
+            if (method === "ticket") { return "liepw@#"; }
+         }
+
+         var connection = new autobahn.Connection({
+            url: "ws://localhost:8080/ws",
+            realm: "liestudio",
+            authmethods: ["ticket"],
+            authid: "lieadmin",
+            onchallenge: onchallenge
+         });
+
+         connection.onopen = function (session, details) {
+            console.log("Connected");
+
+            session.call("liestudio.structure.retrieve_rcsb_structure", [], {pdb_id: '3cro'}).then(
+                function (res) {
+                   document.getElementById('pdb').innerHTML = res['mol'];
+                },
+                function (err) {
+                   console.log(err);
+                }
+            );
+         };
+
+         // now actually open the connection
+         //
+         connection.open();
+      </script>
+   </body>
+</html>

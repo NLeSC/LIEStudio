@@ -2,6 +2,7 @@ FROM python:3.6
 
 RUN pip install --upgrade pip
 RUN pip install --upgrade pipenv
+RUN pip install --upgrade virtualenv
 
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 

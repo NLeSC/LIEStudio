@@ -3,7 +3,6 @@
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/aff6245274f44a7991a3a25976ad6472)](https://www.codacy.com/app/tifonzafel/MDStudio?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=MD-Studio/MDStudio&amp;utm_campaign=Badge_Grade)
 
-
 MDStudio is a stand-alone application featuring a web based graphical user interface.
 Most of the application is written in Python. The web based GUI runs as a client side
 Angular application.
